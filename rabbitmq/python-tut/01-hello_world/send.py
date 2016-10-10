@@ -2,7 +2,14 @@
 
 import pika
 
-connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+credentials = pika.PlainCredentials("sar", "foobar")
+
+connParams = pika.ConnectionParameters('192.168.5.183',
+                                       5672,
+                                       '/',
+                                       credentials)
+
+connection = pika.BlockingConnection(connParams)
 
 channel = connection.channel()
 channel.queue_declare(queue="hello")
