@@ -5,7 +5,7 @@ import sys
 
 if (len(sys.argv) != 2):
   print("Usage: python", sys.argv[0], "<sleep sec>")
-
+  exit(1)
 
 message = "".join(sys.argv[1])
 
