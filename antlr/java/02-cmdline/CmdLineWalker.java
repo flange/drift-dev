@@ -6,7 +6,8 @@ public class CmdLineWalker extends CmdLineBaseListener {
 
   @Override public void exitCmd(CmdLineParser.CmdContext ctx) {
     System.out.println();
-    System.out.println("Command:");
+
+    System.out.println("Command: " + ctx.toStringTree());
 
     System.out.println(" bin: " + ctx.Binary().getText());
 

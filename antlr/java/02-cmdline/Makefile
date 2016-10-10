@@ -1,9 +1,11 @@
+PROJECT=CmdLine
+
 all: grammar
-	javac CmdLine*.java
+	javac ${PROJECT}*.java
 
 grammar:
-	antlr4 CmdLine.g4
+	antlr4 ${PROJECT}.g4
 
 clean:
-	rm -rf *Lexer.java *Listener.java *Parser.java *BaseListener.java
+	rm -rf ${PROJECT}Lexer.java ${PROJECT}Listener.java ${PROJECT}Parser.java ${PROJECT}BaseListener.java
 	rm -rf *~ *.class *.tokens
