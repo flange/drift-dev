@@ -1,3 +1,5 @@
 #!/bin/bash
 
-javac -cp ../00-rabbitmq_jars/rabbitmq-client.jar Send.java Recv.java
+RABBITMQ=/home/frank/1Uni/MA/ma/drift-dev/rabbitmq/rabbitmq_jars/rabbitmq-client.jar
+
+javac -cp .:${RABBITMQ} Send.java Recv.java
