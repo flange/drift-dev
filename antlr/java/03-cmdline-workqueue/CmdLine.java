@@ -29,7 +29,7 @@ public class CmdLine {
 */
 
 
-  private final static String QUEUE_NAME = "task";
+  private final static String TASK_QUEUE_NAME = "task";
 
   public static void execCmd(String cmd) throws Exception {
 
@@ -39,8 +39,8 @@ public class CmdLine {
     Connection connection = factory.newConnection();
 
     Channel channel = connection.createChannel();
-    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-    channel.basicPublish("", QUEUE_NAME, null, cmd.getBytes());
+    channel.queueDeclare(TASK_QUEUE_NAME, false, false, false, null);
+    channel.basicPublish("", TASK_QUEUE_NAME, null, cmd.getBytes());
 
     System.out.println("[TX] sent message");
 

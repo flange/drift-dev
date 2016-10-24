@@ -4,6 +4,7 @@ public class NewTask {
 
   private final static String QUEUE_NAME = "task";
 
+
   private static String joinStrings(String[] strings, String delimiter) {
 
     int length = strings.length;
@@ -17,7 +18,7 @@ public class NewTask {
         words.append(delimiter).append(strings[i]);
 
     return words.toString();
-}
+  }
 
   private static String getMessage(String[] strings) {
 
