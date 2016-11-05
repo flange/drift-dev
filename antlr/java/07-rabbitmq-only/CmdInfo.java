@@ -21,6 +21,21 @@ public class CmdInfo implements Serializable {
 
   public int upCnt = 0;
 
+  public CmdInfo() {}
+
+  public CmdInfo(CmdInfo other) {
+    this.sessionId       = other.sessionId;
+    this.targetName      = other.targetName;
+    this.targetNamespace = other.targetNamespace;
+    this.isAsync         = other.isAsync;
+    this.isQuery         = other.isQuery;
+    this.isLs            = other.isLs;
+    this.isCd            = other.isCd;
+    this.isRm            = other.isRm;
+    this.resultIsNamespace = other.resultIsNamespace;
+    this.upCnt           = other.upCnt;
+  }
+
   public void print() {
     System.out.println("CmdInfo:");
     System.out.println("  session:         " + sessionId);

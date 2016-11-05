@@ -78,24 +78,70 @@ public class CmdLine {
     return true;
   }
 
-  public void sendTask() {
+  public void sendTask(ArrayList<CmdInfo> cmds) {
+
+    ArrayList<String> queues = getQueues();
+    ArrayList<CmdInfo> sendList = new ArrayList<CmdInfo>();
+
+    System.out.println("sendTask():");
+    System.out.println("queues:");
+    for (String q : queues)
+      System.out.println("  " + q);
+
+    System.out.println();
+
+
+    System.out.println("cmds result Qs:");
+    for (CmdInfo cmd : cmds)
+      System.out.println(FS_GLOBAL + cmd.servicesHash());
+
+
+    ListIterator<CmdInfo> cmdsIt = cmds.listIterator(cmds.size());
+
+    while(cmdsIt.hasPrevious()) {
+      CmdInfo prev = cmdsIt.previous();
+
+      String cmdResultQueue = FS_GLOBAL + prev.servicesHash();
+
+      if (queues.contains(cmdResultQueue))
+        break;
+
+      System.out.println("need to send task with result Q: " + cmdResultQueue);
+      sendList.add(prev);
+    }
+
+    if (sendList.size() == 0)
+      return;
 
     try {
       ConnectionFactory factory = new ConnectionFactory();
       factory.setHost("localhost");
 
       Connection connection = factory.newConnection();
-
       Channel channel = connection.createChannel();
+      channel.confirmSelect();
+
       channel.queueDeclare(TASK_QUEUE_NAME, false, false, false, null);
 
-      channel.basicPublish("", TASK_QUEUE_NAME, null, cmdInfo.toByteArray());
+
+      cmdsIt = sendList.listIterator(sendList.size());
+
+      while(cmdsIt.hasPrevious()) {
+        CmdInfo prev = cmdsIt.previous();
+        System.out.println("sending task with resQ: " + FS_GLOBAL + prev.servicesHash());
+
+        channel.basicPublish("", TASK_QUEUE_NAME, null, prev.toByteArray());
+        channel.waitForConfirms();
+      }
 
       channel.close();
       connection.close();
+
     } catch (Exception e) {
       System.out.println(e);
     }
+
+    return;
   }
 
   public void waitForResult(String name) {
@@ -132,8 +178,6 @@ public class CmdLine {
   }
 
   public void printResult(String queueName) {
-
-    System.out.println("printResult() queue: " + queueName);
 
     try {
       ConnectionFactory factory = new ConnectionFactory();
@@ -273,7 +317,7 @@ public class CmdLine {
           break;
 
         String name = new String(delivery.getBody());
-        System.out.println("receiveNS() put(" + namespace + name + ", " + queueName + name + ")");
+        //System.out.println("receiveNS() put(" + namespace + name + ", " + queueName + name + ")");
 
         nameTable.put(namespace + name, queueName + name);
 
@@ -290,11 +334,53 @@ public class CmdLine {
     return;
   }
 
+  public ArrayList<CmdInfo> splitCmd() {
+
+    ArrayList<CmdInfo> cmds = new ArrayList<CmdInfo>();
+
+    if (cmdInfo.services.size() == 1) {
+      cmds.add(cmdInfo);
+      return cmds;
+    }
+
+    ServiceInfo firstSi = cmdInfo.services.get(0);
+    CmdInfo first = new CmdInfo(cmdInfo);
+    first.services = new ArrayList<ServiceInfo>();
+    first.services.add(firstSi);
+
+    cmds.add(first);
+
+    String lastHash = first.servicesHash();
+
+    for (int i = 1; i < cmdInfo.services.size(); i++) {
+
+      ServiceInfo si = cmdInfo.services.get(i);
+
+      if (si.argNames.isEmpty())
+        si.argNames.add(FS_GLOBAL + lastHash);
+      else
+        si.argNames.set(0, FS_GLOBAL + lastHash);
+
+      CmdInfo ci = new CmdInfo(cmdInfo);
+      ci.services = new ArrayList<ServiceInfo>();
+      ci.services.add(si);
+
+      cmds.add(ci);
+
+      lastHash = ci.servicesHash();
+    }
+
+    return cmds;
+  }
+
   public void handleNamespaceCmd() {
+
+    ArrayList<CmdInfo> cmds = splitCmd();
+    CmdInfo lastCmd = cmds.get(cmds.size() - 1);
 
     // result exists
     if (resultExists(cmdInfo.servicesHash() + "/")) {
-      System.out.println("handleNamespaceCmd(): result exists");
+      //System.out.println("handleNamespaceCmd(): result exists");
       nameTable.put(cmdInfo.targetNamespace, FS_GLOBAL + cmdInfo.servicesHash());
       receiveNamespace(FS_GLOBAL + cmdInfo.servicesHash() + "/", cmdInfo.targetNamespace);
       return;
@@ -302,7 +388,7 @@ public class CmdLine {
 
     // no result
     nameTable.put(cmdInfo.targetNamespace, FS_GLOBAL + cmdInfo.servicesHash() + "/");
-    sendTask();
+    sendTask(cmds);
 
     if (!cmdInfo.isAsync)
       receiveNamespace(FS_GLOBAL + cmdInfo.servicesHash() + "/", cmdInfo.targetNamespace);
@@ -312,13 +398,15 @@ public class CmdLine {
 
   public void handleNameCmd() {
 
+    ArrayList<CmdInfo> cmds = splitCmd();
+    CmdInfo lastCmd = cmds.get(cmds.size() - 1);
+
     // anonymous task
     if ((cmdInfo.targetName == null) && (cmdInfo.targetNamespace == null)) {
 
-      if (!resultExists(cmdInfo.servicesHash()))
-        sendTask();
+      sendTask(cmds);
+      printResult(FS_GLOBAL + lastCmd.servicesHash());
 
-      printResult(FS_GLOBAL + cmdInfo.servicesHash());
       return;
     }
 
@@ -332,12 +420,13 @@ public class CmdLine {
 
     // no result
     nameTable.put(cmdInfo.targetName, FS_GLOBAL + cmdInfo.servicesHash());
-    sendTask();
+    sendTask(cmds);
 
     if (!cmdInfo.isAsync)
       printResult(FS_GLOBAL + cmdInfo.servicesHash());
 
     return;
+
   }
 
   public void handleCmd() {
@@ -415,6 +504,31 @@ public class CmdLine {
     }
 
     return;
+  }
+
+  public ArrayList<String> getQueues() {
+
+    ArrayList<String> queues = new ArrayList<String>();
+
+    String[] cmdScript = new String[]{"/bin/sh", "-c", "sudo rabbitmqctl list_queues | tail -n +2 | awk '{print $1}'"};
+
+    try {
+      Process proc = Runtime.getRuntime().exec(cmdScript);
+      Reader r = new InputStreamReader(proc.getInputStream());
+      BufferedReader in = new BufferedReader(r);
+
+      String outputLine;
+
+      while((outputLine = in.readLine()) != null)
+        queues.add(outputLine);
+
+      in.close();
+
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+    return queues;
   }
 
   public boolean hasQueue(String queueName) {
@@ -571,6 +685,7 @@ public class CmdLine {
     importFile("my.tar", cmdLine);
     importFile("test.txt", cmdLine);
     importFile("foo.txt", cmdLine);
+    importFile("nums.txt", cmdLine);
 
     //importDir("res/", cmdLine);
 
@@ -582,8 +697,17 @@ public class CmdLine {
     ServiceWrapper cat = new Cat(false, false);
     cmdLine.serviceRegistry.db.put(cat.name, cat);
 
+    ServiceWrapper square = new Square(false, false);
+    cmdLine.serviceRegistry.db.put(square.name, square);
+
+    ServiceWrapper add = new Add(false, false);
+    cmdLine.serviceRegistry.db.put(add.name, add);
+
     ServiceWrapper emitter = new Emitter(false, false);
     cmdLine.serviceRegistry.db.put(emitter.name, emitter);
+
+    ServiceWrapper emitter2 = new Emitter2(false, false);
+    cmdLine.serviceRegistry.db.put(emitter2.name, emitter2);
 
     ServiceWrapper untar = new Untar(false, true);
     cmdLine.serviceRegistry.db.put(untar.name, untar);

@@ -23,63 +23,6 @@ public class CmdLineWorker {
   String resHash = null;
   String[] cmdScript = null;
 
-  public void sendEofToQueue(String queueName) {
-
-    try {
-      ConnectionFactory factory = new ConnectionFactory();
-      factory.setHost("localhost");
-
-      Connection connection = factory.newConnection();
-
-      Channel channel = connection.createChannel();
-      channel.queueDeclare(queueName.toString(), false, false, false, null);
-
-      Map<String, Object> headers = new HashMap<String, Object>();
-      headers.put("eof", true);
-
-      channel.basicPublish("", queueName.toString(), new AMQP.BasicProperties.Builder()
-        .headers(headers)
-        .build(),
-        "".getBytes());
-
-      channel.close();
-      connection.close();
-
-    } catch (Exception e) {
-      System.out.println(e);
-    }
-
-    return;
-  }
-
-  public void sendMsgToQueue(String msg, String queueName) {
-
-    try {
-      ConnectionFactory factory = new ConnectionFactory();
-      factory.setHost("localhost");
-
-      Connection connection = factory.newConnection();
-
-      Channel channel = connection.createChannel();
-      channel.queueDeclare(queueName.toString(), false, false, false, null);
-
-      Map<String, Object> headers = new HashMap<String, Object>();
-      headers.put("eof",  false);
-
-      channel.basicPublish("", queueName.toString(), new AMQP.BasicProperties.Builder()
-        .headers(headers)
-        .build(),
-        msg.getBytes());
-
-      channel.close();
-      connection.close();
-
-    } catch (Exception e) {
-      System.out.println(e);
-    }
-
-    return;
-  }
 
   public void execNameCmd() {
 
@@ -100,40 +43,7 @@ public class CmdLineWorker {
     ServiceWrapper sw = serviceRegistry.db.get(si.binary);
     sw.run(si.args, si.argNames, FS_GLOBAL + resHash);
 
-/*
-    ServiceInfo si = cmdInfo.services.get(0);
-    String exec = serviceRegistry.db.get(si.binary).exec;
 
-    String rm = "rm -rf";
-
-    for (String name : si.argNames) {
-      exec += " " + Paths.get(name).getFileName();
-      rm += " " + Paths.get(name).getFileName();
-    }
-
-    System.out.println("exec: " + exec);
-    System.out.println("rm: " + rm);
-
-
-    String hashDir = FS_GLOBAL + cmdInfo.servicesHash() + "/";
-    createDir(hashDir);
-
-    System.out.println("  hashDir: " + hashDir);
-
-    try {
-
-      for (String name : cmdInfo.services.get(0).argNames) {
-        System.out.println("  copy " + name + " to " + hashDir + Paths.get(name).getFileName());
-        Files.copy(Paths.get(name), Paths.get(hashDir + Paths.get(name).getFileName()));
-      }
-
-      Process proc = Runtime.getRuntime().exec(exec, null, new File(hashDir));
-      proc = Runtime.getRuntime().exec(rm, null, new File(hashDir));
-
-    } catch (Exception e) {
-      System.out.println(e);
-    }
-*/
     return;
   }
 
@@ -245,8 +155,17 @@ public class CmdLineWorker {
     ServiceWrapper cat = new Cat(false, false);
     serviceRegistry.db.put(cat.name, cat);
 
+    ServiceWrapper square = new Square(false, false);
+    serviceRegistry.db.put(square.name, square);
+
+    ServiceWrapper add = new Add(false, false);
+    serviceRegistry.db.put(add.name, add);
+
     ServiceWrapper emitter = new Emitter(false, false);
     serviceRegistry.db.put(emitter.name, emitter);
+
+    ServiceWrapper emitter2 = new Emitter2(false, false);
+    serviceRegistry.db.put(emitter2.name, emitter2);
 
     ServiceWrapper untar = new Untar(false, true);
     serviceRegistry.db.put(untar.name, untar);

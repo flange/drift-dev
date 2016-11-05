@@ -2,18 +2,17 @@ import java.util.*;
 import java.io.*;
 import com.rabbitmq.client.*;
 
-public class Emitter extends ServiceWrapper {
+public class Square extends ServiceWrapper {
 
-  public Emitter(boolean nsIn, boolean nsOut) {
+  public Square(boolean nsIn, boolean nsOut) {
     super(nsIn, nsOut);
 
-    this.name = "Emitter";
+    this.name = "Square";
   }
 
   public void sendMsg(Channel channel, String msg, String queueName) {
 
-    System.out.println("Emitter.sendMsg() msg:\n" + msg + "  queueName: " + queueName);
-
+    System.out.println("Square.sendMsg() msg:\n" + msg + "  queueName: " + queueName);
 
     try {
 
@@ -25,6 +24,8 @@ public class Emitter extends ServiceWrapper {
         .build(),
         msg.getBytes());
 
+    channel.waitForConfirms();
+
     } catch (Exception e) {
       System.out.println(e);
     }
@@ -34,7 +35,8 @@ public class Emitter extends ServiceWrapper {
 
   public void sendEof(Channel channel, String queueName) {
 
-    System.out.println("Emitter.sendEof() queueName: " + queueName);
+
+    System.out.println("Square.sendEof() queueName: " + queueName);
 
     try {
       Map<String, Object> headers = new HashMap<String, Object>();
@@ -45,6 +47,8 @@ public class Emitter extends ServiceWrapper {
         .build(),
         "".getBytes());
 
+    channel.waitForConfirms();
+
     } catch (Exception e) {
       System.out.println(e);
     }
@@ -54,7 +58,10 @@ public class Emitter extends ServiceWrapper {
 
   public void run(ArrayList<String> args, ArrayList<String> argNames, String resultQueue) {
 
-    System.out.println("Emitter.run()");
+    String inQ = argNames.get(0);
+
+    System.out.println("Square.run()");
+    System.out.println("  in: " + inQ);
     System.out.println(" out: " + resultQueue);
 
     try {
@@ -64,12 +71,25 @@ public class Emitter extends ServiceWrapper {
 
       Connection connection = factory.newConnection();
       Channel channel = connection.createChannel();
+      channel.confirmSelect();
 
-      channel.queueDeclare(resultQueue, false, false, false, null);
+      channel.queueDeclare(inQ, false, false, false, null);
 
-      for (int i = 0; i < 30; i++) {
-        sendMsg(channel, Integer.toString(i), resultQueue);
-        Thread.sleep(1000);
+      QueueingConsumer consumer = new QueueingConsumer(channel);
+      channel.basicConsume(inQ, false, consumer);
+
+      while (true) {
+
+        QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+        Map<String, Object> headers = delivery.getProperties().getHeaders();
+
+        if ((boolean) headers.get("eof"))
+          break;
+
+        int num = Integer.parseInt(new String(delivery.getBody()));
+
+
+        sendMsg(channel, Integer.toString(num*num), resultQueue);
       }
 
       sendEof(channel, resultQueue);
@@ -77,11 +97,13 @@ public class Emitter extends ServiceWrapper {
       channel.close();
       connection.close();
 
-
     } catch (Exception e) {
       System.out.println(e);
     }
 
+    return;
   }
+
+
 
 }

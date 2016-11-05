@@ -12,7 +12,7 @@ public class Cat extends ServiceWrapper {
 
   public void sendMsg(Channel channel, String msg, String queueName) {
 
-    System.out.println("Cat.sendMsg() msg: " + msg + "  queueName: " + queueName);
+    System.out.println("Cat.sendMsg() msg:\n" + msg + "  queueName: " + queueName);
 
     try {
 
@@ -23,6 +23,8 @@ public class Cat extends ServiceWrapper {
         .headers(headers)
         .build(),
         msg.getBytes());
+
+    channel.waitForConfirms();
 
     } catch (Exception e) {
       System.out.println(e);
@@ -44,6 +46,8 @@ public class Cat extends ServiceWrapper {
         .headers(headers)
         .build(),
         "".getBytes());
+
+    channel.waitForConfirms();
 
     } catch (Exception e) {
       System.out.println(e);
@@ -75,6 +79,7 @@ public class Cat extends ServiceWrapper {
 
       Connection connection = factory.newConnection();
       Channel channel = connection.createChannel();
+      channel.confirmSelect();
 
       channel.queueDeclare(inQ, false, false, false, null);
 
@@ -90,18 +95,24 @@ public class Cat extends ServiceWrapper {
           break;
 
         String inLine = new String(delivery.getBody());
+
         stdIn.write(inLine.getBytes());
         stdIn.flush();
 
-        byte[] outBytes = new byte[proc.getInputStream().available()];
-        proc.getInputStream().read(outBytes);
-        sendMsg(channel, new String(outBytes), resultQueue);
+        int firstByte = proc.getInputStream().read();
+        byte[] remainingBytes = new byte[proc.getInputStream().available()];
+
+        proc.getInputStream().read(remainingBytes);
+        String msg = (char) firstByte + new String(remainingBytes);
+
+        sendMsg(channel, msg, resultQueue);
       }
 
       sendEof(channel, resultQueue);
 
       stdIn.close();
       stdOut.close();
+      proc.destroy();
 
       channel.close();
       connection.close();

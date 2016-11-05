@@ -2,17 +2,17 @@ import java.util.*;
 import java.io.*;
 import com.rabbitmq.client.*;
 
-public class Emitter extends ServiceWrapper {
+public class Emitter2 extends ServiceWrapper {
 
-  public Emitter(boolean nsIn, boolean nsOut) {
+  public Emitter2(boolean nsIn, boolean nsOut) {
     super(nsIn, nsOut);
 
-    this.name = "Emitter";
+    this.name = "Emitter2";
   }
 
   public void sendMsg(Channel channel, String msg, String queueName) {
 
-    System.out.println("Emitter.sendMsg() msg:\n" + msg + "  queueName: " + queueName);
+    System.out.println("Emitter2.sendMsg() msg:\n" + msg + "  queueName: " + queueName);
 
 
     try {
@@ -34,7 +34,7 @@ public class Emitter extends ServiceWrapper {
 
   public void sendEof(Channel channel, String queueName) {
 
-    System.out.println("Emitter.sendEof() queueName: " + queueName);
+    System.out.println("Emitter2.sendEof() queueName: " + queueName);
 
     try {
       Map<String, Object> headers = new HashMap<String, Object>();
@@ -54,7 +54,7 @@ public class Emitter extends ServiceWrapper {
 
   public void run(ArrayList<String> args, ArrayList<String> argNames, String resultQueue) {
 
-    System.out.println("Emitter.run()");
+    System.out.println("Emitter2.run()");
     System.out.println(" out: " + resultQueue);
 
     try {
@@ -67,7 +67,7 @@ public class Emitter extends ServiceWrapper {
 
       channel.queueDeclare(resultQueue, false, false, false, null);
 
-      for (int i = 0; i < 30; i++) {
+      for (int i = 0; i < 10; i++) {
         sendMsg(channel, Integer.toString(i), resultQueue);
         Thread.sleep(1000);
       }
