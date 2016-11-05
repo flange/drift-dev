@@ -234,6 +234,8 @@ public class CmdLineWorker {
         }
 
         cmdLineWorker.handleCmd();
+
+        System.out.println("\n\n\n");
       }
     };
 

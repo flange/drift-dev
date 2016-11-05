@@ -225,7 +225,7 @@ public class CmdLine {
 
   public void handleNamespaceCmd() {
 
-    cmdInfo.print();
+    //cmdInfo.print();
 
     // result exists without a name
     if (resultExists(cmdInfo.servicesHash())) {
@@ -632,6 +632,7 @@ public class CmdLine {
 
       if(line.equals("q")) {
         Runtime.getRuntime().exec("rm -rf " + FS_SESSION);
+        //Runtime.getRuntime().exec("rm -rf " + FS_GLOBAL);
         break;
       }
 
