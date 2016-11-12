@@ -27,24 +27,30 @@ public class Recv {
 
 
     //String topic = args[0];
-    TopicPartition partition0 = new TopicPartition("3ad66552f651e7f5edb21c6377e2380f0f6131e92814dc8a896e64a6dd391866", 0);
+    TopicPartition partition0 = new TopicPartition("test", 0);
     List<TopicPartition> topic_list = Arrays.asList(partition0);
 
 
     KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
     consumer.assign(topic_list);
-    consumer.seekToBeginning(topic_list);
+    consumer.seekToEnd(topic_list);
+
+    consumer.seek(partition0, consumer.position(partition0) - 1);
+
 
     //System.out.println("next offset to be fetched: " + consumer.position(partition0));
 
+    //System.out.println(consumer.position(partition0));
 
-    while (true) {
-      ConsumerRecords<String, String> records = consumer.poll(100);
 
-      for (ConsumerRecord<String, String> record : records)
-         System.out.printf("[%d] (%s, %s)%n", record.offset(), record.key(), record.value());
+    ConsumerRecords<String, String> records = consumer.poll(10000);
 
-    }
+    for (ConsumerRecord<String, String> record : records)
+       System.out.printf("[%d] (%s, %s)%n", record.offset(), record.key(), record.value());
 
+
+    consumer.close();
+
+    return;
   }
 }
