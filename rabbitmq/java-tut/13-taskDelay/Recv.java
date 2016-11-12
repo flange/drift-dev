@@ -12,6 +12,9 @@ public class Recv {
     Channel channel = connection.createChannel();
 
     channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+    channel.basicQos(1);
+
+
 
     Consumer consumer = new DefaultConsumer(channel) {
       @Override
@@ -20,47 +23,18 @@ public class Recv {
         System.out.println("[RX] received: " + message);
 
         try {
-          System.out.println("blub");
-
-          for (int i = 0; i < 60; i++) {
+          for (int i = 0; i < 5; i++) {
             System.out.println(i);
             Thread.sleep(1000);
           }
 
-
-        } catch (Exception e) {}
-
-
-
-
-
-
-      }
-
-      public void handleCancel(java.lang.String consumerTag) {
-        System.out.println("handleCancel");
-
-        try {
-          channel.close();
-          connection.close();
         } catch (Exception e) {
-          System.out.println("handleCancel");
+          System.out.println(e);
         }
+
+        System.out.println("ack");
+        channel.basicAck(envelope.getDeliveryTag(), false);
       }
-
-
-      public void handleShutdownSignal(java.lang.String consumerTag) {
-        System.out.println("handleShutdownSignal");
-
-        try {
-          channel.close();
-          connection.close();
-        } catch (Exception e) {
-          System.out.println("handleCancel");
-        }
-      }
-
-
     };
 
     channel.basicConsume(QUEUE_NAME, false, consumer);

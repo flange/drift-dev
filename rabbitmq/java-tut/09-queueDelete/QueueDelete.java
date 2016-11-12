@@ -1,32 +1,19 @@
 import com.rabbitmq.client.*;
 
-public class Send {
+public class QueueDelete {
   private final static String QUEUE_NAME = "hello";
 
-
   public static void main(String[] argv) throws Exception {
-
-    String msg1 = "1";
-    String msg2 = "2";
-
 
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost");
 
     Connection connection = factory.newConnection();
-
     Channel channel = connection.createChannel();
-    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-
-    channel.basicPublish("", QUEUE_NAME, null, msg1.getBytes());
-    //channel.basicPublish("", QUEUE_NAME, null, msg2.getBytes());
-
+    channel.queueDelete(QUEUE_NAME);
 
     channel.close();
     connection.close();
-
-    return;
   }
 }
-
