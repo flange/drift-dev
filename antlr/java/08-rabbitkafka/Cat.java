@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.*;
 
+import kafka.admin.TopicCommand;
 
 public class Cat extends ServiceWrapper {
 
@@ -49,14 +50,49 @@ public class Cat extends ServiceWrapper {
 
       OutputStream stdIn = proc.getOutputStream();
 
-      // create consumer
+
+      // create inQ delete Listener
+      ConnectionFactory factory = new ConnectionFactory();
+      factory.setHost("localhost");
+
+      Connection connection = factory.newConnection();
+      Channel channel = connection.createChannel();
+
+      channel.queueDeclare(resultQueue, false, false, false, null);
+
+      com.rabbitmq.client.Consumer deleteListener = new DefaultConsumer(channel) {
+
+
+        public void handleCancel(java.lang.String consumerTag) {
+          System.out.println("handleCancel");
+
+          try {
+            channel.close();
+            connection.close();
+          } catch (Exception e) {
+            System.out.println("handleCancel");
+          }
+        }
+
+      };
+
+      channel.basicConsume(resultQueue, false, deleteListener);
+
+      System.out.println("lists: ");
+
+      Process proc2 = Runtime.getRuntime().exec("kafka-topics.sh --delete --zookeeper localhost:2181  --topic foobar");
+
+
+
+
+      // create kafka consumer
       Collection<TopicPartition> partitions = Arrays.asList(new TopicPartition(inQ, 0));
 
       KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps);
       consumer.assign(partitions);
       consumer.seekToBeginning(partitions);
 
-      // create producer
+      // create kafka producer
       Producer<String, byte[]> producer = new KafkaProducer<>(producerProps);
 
       int key = 0;
@@ -90,6 +126,9 @@ public class Cat extends ServiceWrapper {
 
       consumer.close();
       producer.close();
+
+      channel.close();
+      connection.close();
 
     } catch (Exception e) {
       System.out.println(e);

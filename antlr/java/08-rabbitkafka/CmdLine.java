@@ -586,6 +586,8 @@ public class CmdLine {
 
   public void sendFileToQueue(String filePath) {
 
+    System.out.println("sendFileToQueue()");
+
     if (hasQueue(filePath.replaceAll("/", "-")))
       return;
 
@@ -602,6 +604,8 @@ public class CmdLine {
     } catch (Exception e) {
       System.out.println(e);
     }
+
+    System.out.println("sendFileToQueue() done");
 
     return;
   }

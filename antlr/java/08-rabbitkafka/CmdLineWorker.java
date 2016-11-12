@@ -16,12 +16,12 @@ public class CmdLineWorker {
   public final static String NONAME = "anonymous";
   public final static String FS_GLOBAL = "fs/global/";
 
-  CmdInfo cmdInfo = null;
+  public CmdInfo cmdInfo = null;
   public static ServiceRegistry serviceRegistry = new ServiceRegistry();
 
-  String cmd = null;
-  String resHash = null;
-  String[] cmdScript = null;
+  public String cmd = null;
+  public String resHash = null;
+  public String[] cmdScript = null;
 
 
   public void execNameCmd() {
@@ -206,13 +206,13 @@ public class CmdLineWorker {
         }
 
         cmdLineWorker.handleCmd();
+        channel.basicAck(envelope.getDeliveryTag(), false);
 
         System.out.println("waiting for new tasks\n\n\n\n");
       }
     };
 
-    boolean autoAck = true;
-    channel.basicConsume(TASK_QUEUE_NAME, autoAck, consumer);
+    channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 
     return;
   }
