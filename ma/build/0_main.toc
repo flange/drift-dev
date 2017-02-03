@@ -1,0 +1,5 @@
+\select@language {english}
+\contentsline {section}{\numberline {1}Introduction}{6}{section.1}
+\contentsline {subsection}{\numberline {1.1}Goal of this work}{6}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Structure of this work}{6}{subsection.1.2}
+\contentsline {section}{\numberline {2}Distributed Programming}{6}{section.2}

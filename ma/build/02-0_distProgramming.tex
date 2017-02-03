@@ -1,0 +1,106 @@
+\section{Distributed Programming}
+In 1937 a paper titled \textit{``On computable numbers, with an
+application to the Entscheidungsproblem''}, written by Alan Turing, was
+published \cite{turingcomputable}. In it Turing defines what is now
+known as a \textit{Turing machine}, a theoretical machine model for
+executing arbitrary computation. He demonstrates how to formulate
+instructions for this machine in order to configure its execution
+behavior and goes so far as to show how this
+machine could even receive another machine configuration as its input
+and then execute what the other machine would have done, thereby
+effectively emulating the given machine.
+\newline
+
+But he wasn't the only one thinking about computation. As summarized
+by Denning in \cite{whatiscomputation}, Kurt Gödel, Alonzo Church and Emil
+Post all contributed to the task of exploring the boundaries of
+computation, setting the tone for the next 80 years of research
+concerning \textit{computation}, \textit{computers} and \textit{automation}.
+
+Of all the proposed approaches of how to tackle the concept of computation
+and turning it into a tool that could be understood and used by delivering
+a theoretical framework, one could argue that Turing's machine model
+emerged as a winner because, although not at the time, it turned out
+to be closest to what machines became to be. How they were structed and
+how they basically operated. Still, to this day.
+
+So in order to use or \textit{program} these machines, these computers,
+programming languages were developed and over the decades have gone
+through their own evolutionary process \cite{pl-gens} with the
+first generation using binary machine instructions to todays languages
+that allow for higher level programming styles like
+\textit{object oriented programming } \cite{bjarneOO} or
+\textit{functional programming} \cite{wadler-functional}.
+\newline
+
+But no matter what mainstream programming language one looks at today,
+they all seem to have one thing in common, which also gets replicated
+by each new language that arrives: they are all focussing on
+describing computation. Computation executed by a single core machine.
+Because for most of the last century, this was the problem we were
+facing.
+
+However, with the advent of commodity multicore hardware
+\cite{core2duo} the problem domain changed. Now a machine isn't
+a single machine anymore, but rather a group of multiple CPU cores
+that can operate and compute independent of each other.
+
+Unfortunately mainstream languages are still struggling with delivering
+language concepts and semantics that allow for utilizing this new
+hardware. In Fig.\ref{pythreads} one can see a very minimal multithreaded
+program written in Python, one of the most used languages today
+\cite{langrank}.
+
+
+\begin{wrapfigure}{l}{0.55\textwidth}
+  \vspace{-10pt}
+  \begin{center}
+    \begin{lstlisting}
+from threading import Thread
+
+def count(n):
+  while n > 0:
+    n -= 1
+
+t1 = Thread(target=count,args=(1000000,))
+t1.start()
+
+t2 = Thread(target=count,args=(1000000,))
+t2.start()
+
+t1.join()
+t2.join()
+    \end{lstlisting}
+  \end{center}
+  \vspace{-20pt}
+  \caption{Python multithreading example}
+  \label{pythreads}
+\end{wrapfigure}
+
+As was shown by Beazley in \cite{pygil} this multithreaded version is up to
+\textit{two times} slower than the single threaded version and the
+reason for this is the so called \textit{Global Interpreter Lock}
+(GIL) used by the Python interpreter which basically prevents multiple
+native threads from truly executing in parallel.
+
+This shows how important it is to reevaluate exisiting programming
+languages and methodologies whenever the underlying machine or system
+changes dramatically.
+\newline
+
+Another such paradigm shift was the advent of
+the \textit{internet}, or large scale networking in general, because it
+dawned what is now known as the \textit{information age}. Although this
+is a rather broad term, describing global change in almost all areas of
+modern civilization, I believe these changes can also be seen in the area
+of computing and computation. Because in order to deliver products
+like: the world wide web, internet search, internet advertising,
+social networks, social media, music streaming,
+video streaming, messenger services, navigation/maps, e-commerce etc.
+companies had to build massive computer networks in order to either store
+massive amounts of data or to simply scale their
+product to millions or billions of users.
+And altough almost all of the current products, apps, or services
+could not exist, without the computation that is implemented inside
+their core parts, it is \textit{communication} that has become the
+main obstacle for building large scale \textit{information systems}.
