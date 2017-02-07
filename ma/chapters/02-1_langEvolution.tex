@@ -1,0 +1,169 @@
+\subsection{Language Evolution}
+\label{LanguageEvolution}
+
+But no matter what mainstream programming language one looks at today,
+they all seem to have one thing in common, which also gets replicated
+by each new language that arrives: they are all focussing on
+describing computation. Computation executed by a single core machine.
+Because for most of the last century, this was the problem we were
+facing.
+
+However, with the advent of commodity multicore hardware
+\cite{core2duo} the problem domain changed. Today even a single a machine
+isn't a single machine anymore, but rather a group of multiple CPU cores
+that can operate and compute independent of each other.
+
+Unfortunately mainstream languages are still struggling with delivering
+language concepts and \textit{semantics} that allow for utilizing this new
+hardware. In Fig.\ref{pythreads} one can see a very minimal multithreaded
+program written in Python, one of the most used languages today
+\cite{langrank}.
+
+
+\begin{wrapfigure}{l}{0.55\textwidth}
+    \begin{lstlisting}
+from threading import Thread
+
+def count(n):
+  while n > 0:
+    n -= 1
+
+t1 = Thread(target=count,args=(1000000,))
+t1.start()
+
+t2 = Thread(target=count,args=(1000000,))
+t2.start()
+
+t1.join()
+t2.join()
+    \end{lstlisting}
+  \caption{Python multithreading example}
+  \label{pythreads}
+\end{wrapfigure}
+
+As was shown by Beazley in \cite{pygil} this multithreaded version is up to
+two times \textit{slower} than the single threaded version and the
+reason for this is the so called \textit{Global Interpreter Lock}
+(GIL) used by the Python interpreter which basically prevents multiple
+native threads from truly executing in parallel.
+
+This is supposed to show how slow adoption and adjustment in the mainstream
+programming language market is happening, even for a problem domain that,
+as I would like to argue, is not even the most recent set of problems
+programmers today need to deal with.
+
+This shows how important it is to reevaluate exisiting programming
+languages, their implementations and their methodologies whenever the
+underlying machine, system or problem domain changes dramatically.
+\newline
+
+Now one could argue that Python might have been a bad example and
+that other mainstream languages offer better adoption of
+multithreaded programming. Fig \ref{thread-examples}
+shows another two examples of how threading is expressed in programming today,
+namely using the programming languages \textit{Java} \cite{java} and
+\textit{Go} \cite{golang}. Altough Java and its virtual runtime environment, the
+\textit{Java Virtual Machine} (JVM) offer the capability of true
+concurrent execution of threads,  threads still only exist as a library
+feature, not as a language primitive. They are created by overwriting
+specific methods that are inherited from either another class or an
+interface and are used like any other \textit{object}
+in Java, an object oriented programming language.
+
+This is supposed to represent the approach that
+has been favoured in programming language design of how to deal with
+a changing environment. Every new or extending aspect is hidden behind
+the \textit{function call}, a core feature of the language. The result is
+that the language itself and its semantics virtually never change, and
+the true meaning of a plain function call is expressed on an external
+napkin so to speak. This eliminates all possibilities for the compiler
+or any other tooling to aid in the development process because to the
+compiler the function call that is supposed to start a new thread
+looks exactly the same as any other function call.
+\newline
+
+Example \ref{thread-examples}b shows a newer language called \textit{Go}.
+In Go threads are called \textit{go routines} because their semantics
+are defined within the language itself and are created by the keyword
+\textit{go}. On the one hand this allows
+any compiler or other tooling to automatically check, at compile time,
+whether certain rules of behavior are implemented correctly by the
+programmer but on the other hand it also delivers guarantees of said
+behavior to the programmer because these go routines will behave the
+same independent of the execution environment in which this code is run.
+Said behavior could vary when threads are only implemented as a library.
+
+\begin{figure}[h]
+    \begin{subfigure}[b]{0.55\textwidth}
+
+    \begin{lstlisting}
+class Demo extends Thread {
+
+  public void run(){
+    System.out.println("foo");
+  }
+
+  public static void main(String args[]) {
+     Demo obj = new Demo();
+     obj.start();
+  }
+}
+    \end{lstlisting}
+
+        \caption{Java threading example}
+        \label{fig:java-thread}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.4\textwidth}
+
+    \begin{lstlisting}
+package main
+import "fmt"
+
+func f(from string) {
+    for i := 0; i < 3; i++ {
+        fmt.Println(from, ":", i)
+    }
+}
+
+func main() {
+  go f("goroutine")
+}
+
+    \end{lstlisting}
+
+        \caption{Go threading example}
+        \label{fig:go-thread}
+    \end{subfigure}
+
+  \caption{Threading examples in Java and Go}
+  \label{thread-examples}
+
+\end{figure}
+
+This shows that language designs do react to dramatic change of the
+underlying machine model. They include important aspects of the
+execution environment and hardware as core features of the language
+in order to provide a programming environment sweetspot: as close
+to the hardware to be still implemented efficiently but abstract
+enough so programming becomes intuitive, productive and less error prone.
+Just like the Turing machine hit that sweetspot on the theoretical side.
+\newline
+
+However, compared to the switch from single core to multi core CPU systems,
+the more dramatic paradigm shift in my view was the advent of
+the \textit{internet}, or large scale networking in general, because it
+dawned what is now known as the \textit{information age}. Although this
+is a rather broad term, describing global change in almost all areas of
+modern society, I believe these changes can also be seen in the area
+of computing and computation. Because in order to deliver new products
+like: the world wide web, internet search, internet advertising,
+social networks, social media, music streaming,
+video streaming, messenger services, navigation/maps, e-commerce etc.
+companies had to build massive computer networks in order to either store
+massive amounts of data or to simply scale their
+product to millions or billions of users
+and although almost all of the current products, apps, or services
+could not exist without the computation that is implemented inside
+their core parts, it is \textit{communication} that has become the
+main obstacle for building large scale \textit{information systems}.

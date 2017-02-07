@@ -1,0 +1,135 @@
+\subsection{Distributed Objects}
+\label{DistributedObjects}
+
+
+So how did the tools, the programming languages we use, react
+to this paradigm shift? Well, Fig.\ref{rmi-example} shows an exemplary
+client and server implementation using a framework called
+\textit{Java Remote Method Invocation} (RMI) which implements the
+more abstract request-and-response concept of
+\textit{Remote Procedure Calls} (RPC).
+
+\begin{figure}[h!]
+    \vspace{5mm}
+    \begin{subfigure}[b]{0.99\textwidth}
+
+    \begin{lstlisting}
+public class ServerOperation extends UnicastRemoteObject implements RMIInterface {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public String helloTo(String name) throws RemoteException {
+        return "hello to " + name;
+    }
+}
+    \end{lstlisting}
+
+      \caption{Java RMI server providing the remote method 'helloTo()'}
+      \label{fig:rmi-server}
+    \end{subfigure}
+    \hfill
+    \vspace{10mm}
+    \begin{subfigure}[b]{0.99\textwidth}
+
+    \begin{lstlisting}
+public class ClientOperation {
+
+  private static RMIInterface look_up;
+
+  public static void main(String[] args) {
+
+    look_up = (RMIInterface) Naming.lookup("//localhost/MyServer");
+    String response = look_up.helloTo("Frank");
+  }
+}
+    \end{lstlisting}
+
+      \caption{Java RMI client calling the remote method 'helloTo()'}
+      \label{fig:rmi-client}
+    \end{subfigure}
+
+  \caption{Java Remote Method Invocation example}
+  \label{rmi-example}
+
+\end{figure}
+
+
+The underlying concept that tries to unify object oriented programming
+and a distributed or networked system is often summarized as
+\textit{distributed objects} \cite{distobjects}. As the names suggest,
+in this programming model, objects cannot only exists in the local
+address space but can also reside on remote machines with their
+methods hence being invoked remotely which by itself is not a bad idea.
+
+But when one looks at how languages and frameworks implemented
+this new model one can see the same pattern as with multithreading
+libraries because the remote functionality and remote method calls are
+implemented by inheriting and overwriting certain methods on the server
+side and on the client side by instantiating a remote object and calling
+a remote method on that object. Unfortunately using the exact same
+syntax as for any local function call.
+
+The difference of course is, that the remote procedure call, being remote,
+has to deal with different error and failure scenarios than any local
+method call. Hence it might throw some sort of remote exception which,
+from the view point of the client can be totally suprising, because
+syntactically there is no indication whatsoever that this is an action
+that involves the network or any remote machine.
+
+The lesson here of course is the same as with concurrency support in
+programming languages because the underlying system changed in nontrivial
+ways but the distributed objects community tried to apply the same
+object oriented programming concepts and languages to this new domain,
+neglecting any additional and unique problems of this new setting and
+hiding all new functionality behind core language features, so that
+any new semantics were only available on a napkin and tool support
+was nearly impossible.
+\newline
+
+Unfortunately today, one could argue that the same approach is being
+used again in the context of highly distributed systems built after
+the microservice paradigm \cite{microservices}. Fig.\ref{pys3} shows
+an example of a Python binding for using the
+\textit{Amazon Web Services} (AWS)
+service called \textit{Simple Storage Service} (S3) \cite{aws}, \cite{aws-s3}.
+
+\begin{figure}[h]
+    \begin{lstlisting}
+import boto
+
+s3 = boto.connect_s3()
+bucket = s3.create_bucket('media.yourdomain.com')
+
+key = bucket.new_key('examples/first_file.csv')
+key.set_contents_from_filename('/home/frank/first_file.csv')
+
+key.set_acl('public-read')
+    \end{lstlisting}
+  \caption{Amazon AWS S3 storage example using the Python interfacing
+          library 'boto'.}
+  \label{pys3}
+\end{figure}
+
+This service is supposed to provide a remote storage solution,
+by storing arbitrary data objects behind unique keys. As can be seen
+in the official example \cite{pys3-example} depicted in Fig.\ref{pys3}
+the unique names are being written using the same format as the widely
+sed UNIX file systems. The example shows how a local file is being
+uploaded to the service. This showcases that Amazon S3 is mostly used
+as a service providing a remote file system to its clients.
+
+But again, from the language perspective of the Python interpreter,
+these remote calls are just normal \textit{local} function calls
+because the semantics and functionality of the S3 service only
+exist in the informal documentation provided by Amazon without any formal
+specification and without any chance of automated tool support
+regarding syntax (parameters) or semantics.
+
+This might be acceptable from a business perspective because already
+existing systems can easily be extended to use these new services
+but this puts all the responsibilities in the hands of the programmer
+and also enables vendor lock-in because the semantics are defined
+by the company providing the abstractions and not only can they
+change them whenever they choose, but also other companies can have
+a vastly different APIs and semantics.
