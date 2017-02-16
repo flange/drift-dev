@@ -84,9 +84,9 @@ building blocks for programmers to compose their programs.
 
 So the relevance of this talk to the work presented here is, that
 it sparked the question of whether or not it would be possible to
-build such a composition language of the system that allowed a
-global perspective without introducing global state and how such a
-language would look like.
+build such a composition language, a language of the system,
+that allowed a global perspective without introducing global
+state and how such a language would look like.
 \newline
 
 The other talk by Hickey which is relevant to this work and which
@@ -140,8 +140,83 @@ the email address would change, as shown in Fig.\ref{sql}b.
 But changing an email address does not invalidate the fact that
 there has been a point in time in which the student used the
 old email address, just like electing a new president of a country
-does not
+does not invalidate the fact that the country was once governed by
+somebody else.
 
+It is these \textit{facts} that in Hickey's view represent what is also
+known as a \textit{value} because a value, once it exists, can never
+change. One of the most used and perhaps most accessable examples of
+values come from mathematics. The value '5' is just that, five. It
+cannot be altered or changed in any way. Five is always five.
+Mathematics allows for expressions like \textit{x = 5 + 1} which
+binds the expression which uses two values and an operator to
+the \textit{name} x. One could now \textit{evaluate} the subexpression
+\textit{5 + 1} which would yield another value, namely '6', but that
+would not change either the value '5' nor the value '1'. Five is always
+five, even when used in compound expressions.
 
+This is exactly what \textit{value-oriented programming} is about.
+It treats \textit{data} as values, so data is \textit{immutable}
+by default. Since data is immutable this means that it behaves
+like facts: once created (once it happened) it stays true forever
+and since operations on data can never change that data but only
+create new data, it becomes easy to record the history of steps
+that led to the creation of data. It's almost like one gets the
+history of operations on data for free, once data is immutable
+which is the direct opposite of place-oriented programming.
+\newline
+
+Both these approaches represent the extreme positions on a spectrum
+of language and system design. Unfortunately though, both these
+approaches in their basic form share a mutual problem: they don't scale.
+Place-oriented systems are very \textit{space efficient} because
+places are singletons, they are unique and there is only exactly
+\textit{one} of each place. This means that all producers and
+consumers or all readers and writers working on a place need to
+be mutually excluded from doing so. Access to a place needs to
+somehow be coordinated. One example for such coordination are
+\textit{mutexes} (also called \textit{locks}). However, this means
+that with an increasing number of accesses to a place, the
+contention for that place increases and the time spent on coordinating
+this access increases, especially if each logical operation needs
+access to multiple places in order to complete successfully. So
+place oriented systems scale in terms of space but not in terms of
+time.
+
+As already outlined, value-oriented systems implement the exact
+opposite. Because values can never change, it is absolutely
+safe to allow multiple access to a value, or give each accessor
+its own copy. To stick with the mathematics example, it is common
+to see multiple functions using the value '5' as one of their
+input values. One calculating the square of its inputs the other
+something completely different. Although both are working with
+the same \textit{value} they are working with their own copies of it,
+which don't have to updated or coordinated in any way, because
+five is always five. The value cannot change. This means that there's
+virtually no coordination overhead which allows value-oriented
+systems to scale in time, but because multiple instances or copies
+of the same value might need to exist, the system does not scale in
+space.
+\newline
+
+So the choice every language or systems designer needs to make,
+is which scalability bottleneck the system will be able to cope with.
+Is space going to be the issue, so it is important to be space efficient
+and feasible to pay for that efficiency with coordination overhead,
+because contention will be sparse? Or is contention going to be the
+issue, so that it is easier to supply enough space in order to keep
+the coordination overhead to a minimum?
+
+As I would like to argue, in the context of future
+distributed systems,
+the latter approach seems more appropriate because until now, we
+have tried to simply port our place-oriented systems like file
+systems and data bases into the distributed context and it didn't
+seem to work out all that well. I argue that distributed systems
+are not so much about place-efficient computation, but rather about
+\textit{communication} and \textit{coordination}. Which means that
+a value-oriented system will keep the overhead for these things to
+a minimum and it is way easier to supply enough space, than to make
+a place-oriented system scale in the distributed context.
 
 

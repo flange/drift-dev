@@ -1,0 +1,90 @@
+\subsection{The Cuneiform Language}
+\label{cuneiform}
+
+One area that features a wide variety of custom tailored languages
+which allow to describe a possibly distributed system from a
+bird's-eye perspective, is the field of \textit{scientific workflows}
+\cite{kepler}, \cite{swf-survey}.
+Especially in the context of \textit{bioinformatics}, scientific
+workflow systems like Kepler \cite{kepler}, Taverna \cite{taverna}
+and Pegasus \cite{pegasus2004}, \cite{pegasus2005} have become an
+invaluable tool because they allow to utilize distributed systems
+in order to cope with the sheer amount of data that's been used and
+might also allow for massive gains from parallelization.
+
+One language that is beeing developed here at the Humboldt
+Universität zu Berlin, at the department of \textit{Knowledge Management
+in Bioinformatics}, is called \textit{Cuneiform}
+\cite{cuneiform}, \cite{saasfee}.
+
+Matching the approach advocated by Rich Hickey and as presented in
+the chapter \ref{LanguageOfTheSystem}, Cuneiform is a functional
+workflow language with a formal foundation in the lambda calculus
+\cite{lambdachurch}, \cite{lambda-calc} and with an emphasis on
+immutable data. Another key aspect of Cuneiform is its
+\textit{foreign function interface} which allows to use already
+exisiting bioinformatics tools with any modifications. Most
+other scientific workflow systems force users to reimplemented
+their desired services using the abstractions given by the framework.
+
+\begin{figure}[h]
+    \begin{lstlisting}
+deftask untar (<list(File)> : tar(File)) in bash *{
+  tar xf $tar
+  list=`tar tf $tar`
+}*
+
+txt = untar(tar: 'corpus.tar');
+csv = wc(txt: txt);
+result = groupby(csv: csv);
+result;
+
+    \end{lstlisting}
+  \caption{A shortened word count example using the functional workflow
+           language \textit{Cuneiform}}
+  \label{cf-example}
+\end{figure}
+
+Fig.\ref{cf-example} shows a shortened and small word count example,
+taken directly from Brandt et al. \cite{cuneiform}. First this
+example shows how a Cuneiform task is defined using the \textit{deftask}
+keyword. The task named \textit{untar} is supposed to deliver the
+same functionality as the widely known UNIX tool \textit{tar} and
+therefor expects a \textit{file} as
+input and returns a \textit{list of files} as output. Showcasing the
+foreign function interface capabilities, one can see that it is
+specified that the body of this task will actually be written in
+\textit{Bash}, the language of the same-named UNIX-like operating
+system shell.
+
+The actual workflow description is shown in lines 6-9. Since
+Cuneiform uses \textit{lazy evaluation} the first lines 6-8
+don't actually trigger any behavior of the system. They only
+describe the workflow. Line 9 shows the query syntax of the
+system, which will finally trigger the actual execution of the specified
+workflow and print its result.
+
+As one can see the results of the called tasks are bound to names
+using the \textit{=} operator syntax, which in an imperative language
+might be called the \textit{assignment operator}. Since Cuneiform follows
+the functional programming paradigm, these name bindings, rather than
+being assignments, are later dissolved using textual substitution.
+
+Each name in the example work flow is used by the following task
+invocation as an input, therefor creating a zick-zack like pattern
+which basically describes a sequential data dependency between these tasks.
+
+This shows that the coordination expressed via Cuneiform describes the
+data dependenies and therefor the \textit{data flow} between tasks which
+cannot only be a sequential flow, but rather can branch out and join
+again in any possible way, describing a \textit{directed acyclic graph}
+(DAG).
+
+Since Cuneiform uses lazy evaluation, lines 6--8 build the DAG which
+can then be optimized or minimalized when the actual query operator
+in line 9 triggers its execution.
+\newline
+
+The next chapter will try to show, how these core concepts of a
+functional language and its data flow describing qualities can be
+mapped or emulated by the language used in the common UNIX shell.
