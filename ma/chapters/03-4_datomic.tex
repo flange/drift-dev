@@ -64,6 +64,45 @@ he wants to receive the most recent value or the history of a
 value. This lends itself to using timed window operations in order
 to select only a fraction of the history and brings this system
 closer to the field of data streams and event stream processing.
+However, this means that the accretion of facts does not
+scale in space but needs virtually no coordination overhead and
+therefor scales in time, as has already been hinted at in chapter
+\ref{LanguageOfTheSystem}.
+\newline
+The relevant aspect of the Datomic project for the work presented
+here, is the fact that Datomic, despite being a data base, does not
+provide any storage capabilities. One needs to supply a storage
+solution on top of which Datomic can run. Interestingly enough,
+\textit{any} already existing storage solution, from well known
+SQL data base systems, to No-SQL systems and key-value stores can
+be used to host Datomic, because the schema enforced by Datomic
+can be mapped to any known way of structuring data. Take a key-value
+store for instance. In order to store the values saved in Datomic
+the key would simply be the 3-tuple of $(Entity, Attribute, Transaction)$
+and the value would be just that, the value.
 
+This means that the key insight of Datomic is not to be a full fledged
+distributed data base in and by itself, but rather to be a very
+thin data interface that creates \textit{the illusion of immutable data}
+on top of already existing distributed but mutable,
+place-oriented storage systems.
+\newline
 
+I guess it is safe to say, that this is Hickey's most important
+message: that functional programming at its \textit{core} is not
+about functions being first class citizens, not about monads or
+type classes, not about partial application or currying, not
+about implicit parallelization, independent term evaluation or
+lazy evaluation.
+It's about \textit{immutable data} and nearly every important aspect about
+functional programming can be derived from this single fact.
+
+Unfortunately Hickey draws another conclusion from that, which I
+would like to argue is debatable, namely that this immutability
+should be propagated all the way up to the user interface (the
+language). The next chapter will show an example that does not
+follow this approach and the following chapters will try to explore
+how to build the illusion of mutability on top of an immutable
+system just like Datomic creates the illusion of immutability
+on top of a mutable system.
 
