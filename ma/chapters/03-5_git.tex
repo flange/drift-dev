@@ -43,7 +43,7 @@ steps.
 
   \includegraphics[width=0.5\textwidth]{git.png}
   \caption{Example of Git's internal tree structure based on content hashing.}
-  \label{git}
+  \label{gittree}
 
 \end{wrapfigure}
 
@@ -52,7 +52,7 @@ Git then stores the content of the tracked files as so called
 Therefor behaving like a \textit{content addressable file system}
 underneath. In order to store the file and directory structure
 a tree structure is used in which blobs represent files and
-subtrees represent directories, as shown in Fig.\ref{git} which
+subtrees represent directories, as shown in Fig.\ref{gittree} which
 was taken from \cite{gitinternals}. It's important to note that
 if a file is changed by the user and that file is then tracked
 and the change committed to git, the hash of the content of the
