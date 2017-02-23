@@ -1,0 +1,532 @@
+\subsection{The Drift Language}
+\label{driftlang}
+
+And so, in that same spirit, the basic concepts of the \textit{Drift}
+language are \textit{names} to represent data and \textit{services}
+to represent functionality.
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+
+  \begin{lstlisting}
+.> Cat mydata
+Lorem ipsum dolor sit amet,
+consectetur adipiscing elit.
+.>
+  \end{lstlisting}
+
+        \caption{Simple service invocation.}
+        \label{cat1}
+    \end{subfigure}
+    \hspace{20pt} %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.4\textwidth}
+
+  \begin{lstlisting}
+.> myresult = Cat mydata
+.>
+  \end{lstlisting}
+
+        \caption{Service invocation with result bound to a name.}
+        \label{cat2}
+    \end{subfigure}
+    \caption{Basic service invocation mechanism in Drift.}\label{drift-examples1}
+\end{figure}
+
+Fig.\ref{drift-examples1} shows the basic concepts offered by
+the \textit{Drift language} as implemented by the \textit{Drift shell}.
+In the Drift language, service names are required to
+start with an upper case letter, whereas names representing
+data are to be started with a lower case letter. The $.>$ symbolizes
+the shell prompt. The first example of Fig.\ref{cat1}
+shows the most basic use case: a simple service invocation.
+Following the tradition of the UNIX shell, Drift uses the same
+order of command and arguments, namely
+$Service\ name_{1}\ ...\ name_{n}$.
+Depending on the called service it would also be possible to
+invoke services without any parameter names.
+
+Since Drift is eager-evaluated the service shown in
+Fig.\ref{cat1} is immediately started. In this case it's
+a service called \textit{Cat} in reference to the widely-known
+UNIX tool, which prints the content of given files to the screen.
+So the \textit{Cat} service also returns the data of its arguments and
+since there are only names in Drift, the \textit{Cat} services takes names
+as input and returns the data associated with them.
+
+Since the data returned by the invocation of the \textit{Cat} service is
+not bound to any name, it just gets printed to the shell. When all
+the data that is available behind the name(s) given to \textit{Cat} has been
+printed, a new shell prompt is shown and further commands can be entered
+by the user.
+
+Fig.\ref{cat2} shows the same service invocation but this time the
+result of the service call is bound to a name, using the assignment
+syntax as known from other imperative languages. Again the
+\textit{Cat} service is invoked immediately but since its result
+is bound to a name, nothing is printed to the screen except a new
+prompt so that new commands can be entered.
+
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+
+  \begin{lstlisting}
+.> myresult = Cat mydata
+.> $myresult
+Lorem ipsum dolor sit amet,
+consectetur adipiscing elit.
+.>
+  \end{lstlisting}
+
+        \caption{Using the \$-operator to query the data behind a name.}
+        \label{cat3}
+    \end{subfigure}
+    \hspace{20pt} %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.4\textwidth}
+
+  \begin{lstlisting}
+.> Cat mydata
+Lorem ipsum dolor sit amet,
+[cancel]
+.>
+  \end{lstlisting}
+
+        \caption{Canceling an ongoing data query.\\}
+        \label{cat4}
+    \end{subfigure}
+    \caption{Basic query and query cancelation mechanism in Drift.}\label{drift-examples2}
+\end{figure}
+
+In order to query the data that is represented by a name, Drift offers
+the \$-operator, a designated query operator, as shown in \ref{cat3}.
+This query operator will receive \textit{all} the data available
+behind a name and print it straight to the screen.
+
+However, since services are invoked immediately and therefor executed
+immediately, it is possible that the service has not yet produced
+a single data item or has not yet finished processing and has
+therefor not finished producing all of its output. This means that
+it is absolutely possible that either no data or only some data is
+shown, depending on what's available when the user issues the query.
+\newline
+Drift is not an \textit{all or nothing} batch system where the user
+either sees no output, or all the output atomically. It's a streaming
+system in which data is observable whenever it is available. This is
+based on the observation that batch processing, even distributed
+batch processing, is only \textit{a special case} of stream processing
+and not the other way around, as was also proclaimed in
+\cite[chapter 1]{flink}. This fits perfectly with the overall
+approach of immediate feedback because not only the commands of
+the shell are eagerly evaluated and because of that the services
+immediately spawned, but also the data produced by the individual
+components flowing through the system can be immediately observed
+by the user.
+\newline
+Of course it would defeat the purpose and reactiveness of the system
+if the user would have to wait for all the data to be finished, once
+querying a name. Therefor query cancelation has been implemented as
+shown in Fig.\ref{cat4}. When data is printed to the screen, either
+because the result of the producing service invocation was not bound
+to a name, or because a name was queried using the \$-operator, the
+display of data can be canceled simply by pressing $q$ and new prompt
+will be shown so that new actions can be taken.
+
+Therefor printing data to the screen has not the role of presenting
+real results, like in many batch processing systems. It rather becomes
+a tool for the user to sneak a peek at what the system is currently
+doing in order to assess whether or not the system is working
+towards the desired result.
+\newline
+
+So where do all the available services and names come from?
+In the same way that the UNIX shell does not provide much
+built-in functionality except for only a very few built-in
+commands, the Drift shell also does not provide any services.
+Services need to be inserted into a \textit{service registry}.
+
+This is a designated service invisible to the user that the
+Drift shell assumes to be available at all times. When a command
+is entered, the shell will consult the service registry about
+whether the service exists and whether its usage corresponds to
+its specification stored in the service registry.
+
+However the shell does not \textit{download} the required service
+in any way. It only fact-checks the service before issuing the
+entered command as a task to the back-end system, as will be
+described in chapter \ref{driftimplementation}.
+If a service is unknown to the service registry, a
+\textit{service unknown} error will be printed to the screen
+and a new prompt is shown.
+\newline
+
+The availability of names is different. One of the design goals
+of the Drift shell is to present the user with its own cloud so
+to speak. Therefor any Drift shell invocation starts a new
+\textit{session} using a UUID as a unique session identifier.
+In the current implementation, this UUID is also generated and
+handed out by the service registry.
+
+Following this principle, any session starts with a
+completely empty \textit{namespace} containing no names. However,
+before the actual session starts and the entering of commands is allowed,
+the user is presented with a setup phase. In this \textit{import phase}
+she can only use the \textit{import} keyword to \textit{upload}
+files from the local file system of where the Drift shell is run
+into the Drift system.
+
+When the user has finished the import phase, the actual session
+begins and normal command input is possible. The \textit{import}
+keyword and therefor any further imports are disabled.
+
+\begin{wrapfigure}{l}{0.35\textwidth}
+  \begin{lstlisting}
+Session: e3d78ad5-898...
+.> import data.csv
+.> import test.txt
+.> q
+-------------------
+.> ls
+  data.csv
+  test.txt
+.> result = Cat test.txt
+.> ls
+  data.csv
+  result
+  test.txt
+.> export result as result
+.> q
+
+  \end{lstlisting}
+  \caption{Example of a short Drift session.}
+  \label{drift-import}
+\end{wrapfigure}
+
+Fig. \ref{drift-import} shows an example session including the import
+phase. Here two local files, namely \texttt{data.csv} and
+\texttt{test.txt} are uploaded to the Drift back-end. When the
+import phase is finished by pressing $q$, the normal session
+begins. This example also introduces one of the few built-in
+commands of the Drift shell, namely \texttt{ls}. These built-ins
+are again lent from the original UNIX shell and UNIX file system,
+so \texttt{ls} is of course used to list all the available names
+in the current namespace.
+
+Now with these imported names and associated data, services can
+be invoked and their result can be bound to new names. In order
+to recognize whether a name resulted from an import or was later
+created during the session, only the imported names are allowed
+to contain dots and file endings like \texttt{.txt}, \texttt{.csv}
+or \texttt{.tar}.
+
+In the same way that the import keyword during the import phase
+allows to fill the initial namespace with names, the \textit{export}
+keyword allows to \textit{download} the data referenced by a name
+to the local file system under a given name. In the current
+implementation this can be done at any time during a session
+but it could also be a valid alternative to put the export
+behavior into a seperate export phase before closing the session.
+
+The local file in which the data is stored is placed inside a
+directory with the same name as the session ID, eliminating the
+possibility of name clashing between different sessions (of
+possibly different users). However, the user of a session is
+responsible for preventing name clashes from within a session
+when using the \textit{export} keyword.
+\newline
+
+So far \textit{names} and \textit{services} and their basic
+usage have been introduced. Initial data can be uploaded from
+the local file system into the Drift back-end and imported as
+names into the initial name space of a session of the Drift shell.
+Resulting data from service invocations can be either printed
+to the screen or bound to names using the assignment syntax known
+from other languages and the namespace can be explored by using
+well known UNIX file system commands like \texttt{ls}.
+
+However, there are services whose result is not just singular data.
+As has already been mentioned, one possible file extension for
+imports is \texttt{.tar} and so naturally one service which is
+able to deal with such imports is called \texttt{Untar*},
+with the \texttt{*} on the right hand side being of significance
+because it indicates that the output of \texttt{Untar*} is not
+just data (a single file) but rather a bunch of names.
+Which is why the concept of \textit{names} in the Drift language
+is expanded to also include \textit{namespaces}, which directly
+correspond to directories in the original UNIX file system.
+
+Since the result of an invocation of \texttt{Untar*} is a
+namespace, it wouldn't really make sense to be able to print
+it to the screen. But it would also not make sense to bind
+a bunch of names to only a single name, as was shown so far.
+
+Therefor, the result of services returning a namespace must
+also always be bind to a namespace.
+
+\begin{wrapfigure}{l}{0.4\textwidth}
+  \begin{lstlisting}
+Session: e3d78ad5-898...
+.> import comments.tar
+.> q
+-------------------
+.> ls
+  comments.tar
+.> res/ = Untar* comments.tar
+.> ls
+  comments.tar
+  res/
+.> cd res/
+.> ls
+  c1
+  c2
+  \end{lstlisting}
+  \caption{Example of a name space binding.}
+  \label{untar}
+\end{wrapfigure}
+
+As shown in Fig.\ref{untar} \textit{namespaces} also start with
+a lower case letter, just like names but namespaces must always
+be trailed by a \texttt{/}. This and the additional \texttt{*}
+allow the interpreter to syntactically verify that the issued
+command is at least valid in terms of its basic format.
+If the format is invalid an error is printed to the screen to
+inform the user and the command is not accepted.
+
+The resulting namespace then of course contains the unpacked
+files as new names. This allows the namespace of the whole session
+to become a namespace tree in the same way that the UNIX file system
+offers a naming tree, with \texttt{/} as a delimiter. Using another
+shell built-in, \texttt{cd}, the user can also \textit{walk} the
+namespace tree just as with the usual UNIX file system, as is
+also demonstrated in the example shown in Fig.\ref{untar}.
+
+This is important because since there are no variables in the
+Drift language, only names and namespaces one could now say
+that either the original file system was liftet up into the
+language or the language allows its variable-space to be
+traversable like a tree. Both interpretations, I think, are valid.
+
+But not only the variable-space or data-space forms a tree. As
+was already mentioned, also the orchestration of services and
+the data flow between them forms a tree or possibly even a DAG.
+
+In order to allow for such composition, the Drift language also
+features the \texttt{|}-operator (pipe operator) which behaves
+exactly like the pipe operator already known from the UNIX shell
+as introduced in chapter \ref{bash}. Fig.\ref{pipe-example}
+shows one possible use of the pipe operator in order to
+count the number of lines of comments that might have been
+left under an online video or blog post.
+
+This again showcases the \texttt{*} syntax, which is not only
+needed in order to indicate that a service \textit{produces}
+a namespace but also to indicate that a service \textit{receives}
+ a namespace as input. Therefor the interpreter can immediately check,
+(with help of the service registry)
+whether or not the basic formats of names, namespaces and services
+are valid. But this is not only supposed to help the interpreter.
+It is of course done with the best intentions for the user, so that he,
+given meaningful names and these basic format identifiers, might
+intuitively understand even longer chains.
+
+\begin{figure}[h]
+    \begin{lstlisting}
+Session: e3d78ad5-898...
+.> import comments.tar
+.> q
+-------------------
+.> linesOfComments = Untar* comments.tar | *Concat | LineCount
+.> $linesOfComments
+  4653
+.>
+    \end{lstlisting}
+  \caption{Example of using the pipe operator and \texttt{*} syntax.}
+  \label{pipe-example}
+\end{figure}
+
+However, it is not
+immediately obvious why such an operator is actually needed.
+As was shown so far, the result of every single service invocation,
+whether it returns singular data or a namespace, could be bound to
+a name or namespace respectively. Leaving it at that, would create
+the same zick-zack pattern as demonstrated in Fig.\ref{cf-example}
+in chapter \ref{cuneiform}. Unfortunately this would lead the user
+into a direction that is opposite to the core philosophy of the
+Drift language.
+
+In Drift, there are only names. Not because this makes things
+easy but rather because it is the \textit{names} that carry all
+the semantics for us programmers and the goal of the Drift language
+is to eliminate every unnecessary clutter and focus on the essence,
+focus on the names and chose them wisely in order for them to
+convey as much \textit{meaning} as possible.
+
+But not every single service invocation is full of meaning. Sometimes
+a certain combination of service calls, maybe even in the specified
+order provide a meaningful transformation. Instead forcing the user
+to provide meaningful names for every single invocation would lead
+to meaningless placeholder names like \texttt{ccd} or \texttt{idx2}.
+
+So in the same way, that \textit{Git} puts the responsibility of
+chosing when and how much to commit into the hands of the user,
+the \texttt{|}-operator allows the user the chain together
+multiple service invocations sequentially and then giving the
+result of the whole chain a meaningful name. So it is still
+possible to revert to single-stepping each service call if
+deemed necessary but arbitrary batch sizes of services are
+also possible. It is up to the user to chose wisely.
+
+\begin{wrapfigure}{l}{0.4\textwidth}
+  \begin{lstlisting}
+Session: e3d78ad5-898...
+.> import data.csv
+.> q
+-------------------
+.> a = A data.csv
+.> b = B a
+.> c = C a
+.> d = D b c
+  \end{lstlisting}
+  \caption{Example showing how to construct dependency graphs.}
+  \label{dag}
+\end{wrapfigure}
+
+But sequential chains of service do not make for full fledged
+DAGs. Fig.\ref{dag} shows an example of the well known
+diamond formation. So simply reusing the names that have
+been created through earlier service calls and binding their
+results to new names in order to make them reusable later allows
+for the creation of arbitrary dependency graphs.
+These graphs naturally lend themselves to be visualized as will
+be shown in chapter \ref{driftui}.
+
+So far, one could argue that besides the eager evaluation,
+the Drift language behaves like a basic functional language.
+There are no variables so there is no contention about the values
+of such variables (the name \textit{variable} itself suggests
+change over time, also known as state) and data produced by services
+is only loosely bound to names as is mostly done in functional languages
+\footnote{by the use of a so called \textit{let}-expression \cite{let}}.
+
+\begin{wrapfigure}{r}{0.4\textwidth}
+  \begin{lstlisting}
+.> a = A data.csv
+.> b = B a
+.> a = C
+.> ?b
+  B a
+.> ?b.a
+  A data.csv
+.> ??
+  B (A data.csv)
+.>
+  \end{lstlisting}
+  \caption{Example showing state in the language and how service
+           invocations behave as closures.}
+  \label{state}
+\end{wrapfigure}
+
+However, Fig.\ref{state} shows how state is included in the Drift
+language because names, even when services have already been started
+with these names as input, depending on the data they represent,
+can be overwritten and bound to new data any time.
+
+The rather abstract example shows how a name \texttt{a} is created
+by starting the service \texttt{A} with the input name \texttt{data.csv}
+which can savely be assumed to be an imported name, because only import
+names are allowed dots and file endings like \texttt{.csv}.
+While this \texttt{A} service might be running, another service,
+\texttt{B} is started, using the ouput of \texttt{A} as input.
+Since data is made available to these names as soon as it is available
+there might be a data stream between these two services, who also
+form a sequential data dependency. But it is also possible, that the
+user enteres line 2 after the invocation of service \texttt{A} in line
+1 has already finished. Then all the data is available and \texttt{B}
+can pull that data depending only on its own processing speed.
+
+Then, in line 3, the name \texttt{a} is re-bound to the result
+produced by the invocation of \texttt{C}. So when now querying
+the data behind \texttt{a} using the \texttt{\$}-operator, the
+user would see the data produced and streamed by \texttt{C}.
+If the user queries the data available behind the name \texttt{b}
+however, it would see the result of B \textit{still consuming
+from \texttt{a}}. Therefor the invocation of \texttt{B} on \texttt{a}
+\textit{captures} the value of \texttt{a} indefinitely and is therefor
+not concerned by any later change.
+\newline
+
+Unfortunately this can make it difficult to remember how the data
+currently shown by a query on a name came to be.
+In order to help with that, the Drift Shell offers another built-in
+feature, namely the \textit{history query} operators \texttt{?} and
+\texttt{??}.
+
+As shown in line 4-7 in Fig.\ref{state}, the simple history query
+operator \texttt{?} can be used for a quick resolution of the
+statement that was issued in order to produce the data that is
+currently bound to a name. In the case of the name \texttt{b}
+that statement was the invocation of \texttt{B} on \texttt{a}.
+
+But since the value of \texttt{a} has changed since the original
+invocation, the simple history query operator \texttt{?} can further
+be used to resolve \textit{any} name in a statement and show the
+statement that created that name, at the point in time when the
+overall statement was issued, as shown in line 6 and 7. When
+the overall statement was issued, the name \texttt{a} was bound
+to the result of the invocation of \texttt{A} on \texttt{data.csv}
+and not to the result of \texttt{C} as is now the case.
+
+So the simple history query operator \texttt{?} can be used to
+arbitrarily traverse the whole history tree of any given name
+or statement. The full history query operator \texttt{??} is then
+a mere shortcut that immediately unveils the complete history tree
+of a statement. This should be used carefully, since
+all the intermediate names are being resolved, it is up to the
+user to reconstruct the meaning of the issued statements, as shown
+in line 9.
+\newline
+
+\begin{wrapfigure}{l}{0.4\textwidth}
+  \begin{lstlisting}
+.> a = A data.csv
+.> b = B a
+.> ls
+.> rm a
+.> ls
+  b
+  data.csv
+.> ?b
+  B a
+.> ?b.a
+  A data.csv
+.>
+  \end{lstlisting}
+  \caption{Example showing how names can be removed.}
+  \label{remove}
+\end{wrapfigure}
+
+One interesting aspect that follows from this is shown in Fig.\ref{remove}.
+Since service invocations capture the values of their input names
+so that they can be overwritten, these names cannot only
+be overwritten but also flat out deleted. In order to that, the
+Drift shell offers yet another built-in command called \texttt{rm}.
+
+Although the deleted name is no longer shown by \texttt{ls} and
+therefor currently not available for any commands, its value is
+still captured by the invocation of \texttt{B} just as it was
+captured in Fig.\ref{state}.
+
+In that sense the Drift language allows for state, because the value
+of its variables, its names, depends on the moment of time when they
+are queried. But it also works like \textit{Git} in the sense that
+the user can observe her behavior immediately: things that are deleted
+are gone but underneath everything depending on those things still
+works.
+And so the next chapter will show how these semantics allow for
+and are used for building a distributed system, orchestrating
+multiple independent services on multiple machines in a fault-tolerant
+manner.
+
+
