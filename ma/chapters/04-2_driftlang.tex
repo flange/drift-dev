@@ -454,7 +454,11 @@ If the user queries the data available behind the name \texttt{b}
 however, it would see the result of B \textit{still consuming
 from \texttt{a}}. Therefor the invocation of \texttt{B} on \texttt{a}
 \textit{captures} the value of \texttt{a} indefinitely and is therefor
-not concerned by any later change.
+not concerned by any later change. Therefor service invocations
+behave exactly like \textit{closures}, a concept from the area of
+functional programming describing function invocations that capture
+their environment (variable names and their values) \cite{closure},
+\cite{closurewiki}.
 \newline
 
 Unfortunately this can make it difficult to remember how the data
