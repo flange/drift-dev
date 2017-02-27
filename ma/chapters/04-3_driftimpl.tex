@@ -276,13 +276,13 @@ see the data of the result and therefor queries the name
 \textit{foo} using the query operator \texttt{\$}. This is
 shown as step 2 in Fig.\ref{system2}. This showcases another
 feature that is widely adopted by most message queueing
-frameworks and infrastructure: both, consumer or producer,
+frameworks and infrastructure: both, consumer and producer,
 are able to create queues. That means that whoever requests
 a queue first, will trigger its creation and any subsequent
 request for queue creation are being ignored as idempotent
 by the message broker. So in this case it is assumed that
 the shell, as the consumer, is first to request data from the
-queue with the name \textit{a64e3fc}. For step 2 it is further
+queue with the name \texttt{a64e3fc}. For step 2 it is further
 assumed that no data is currently available, so no data is
 printed to the user and the shell blocks in a sort of
 receive loop, in the same that an actor would block, waiting
@@ -380,7 +380,9 @@ This is due to the \textit{Abstract Message Queue Protocol}
 implementations and frameworks. The AMQP defines that,
 although messages can be fanned out to multiple consumers,
 a consumer only receives those messages that arrived in the
-queue \textit{after} the consumer registered at the queue.
+queue \textit{after} he registered at the queue, in the
+same way that a chat client only receives the chat messages
+that are posted, after it joined the chat room.
 
 Since RabbitMQ implements the AMQP, it would've been impossible
 to implement the data layer using RabbitMQ only, given the
@@ -391,15 +393,256 @@ produced to that queue. In fact, consumers need to be able
 to start consuming from the beginning of the queue, no matter
 how much messages are already contained in that queue.
 
-Luckily...
+Luckily there is a new open source message queue project called
+\textit{Apache Kafka} which does \textit{not} implement the AMQP
+\cite{kafka}, \cite{kafkapaper}, \cite{kafkabook}.
+Therefor Kafka queues keep their messages for a configurable
+retention period, regardless of how many consumers ``consume''
+them. It is debatable whether or not messages are still being
+\textit{consumed} when they are not actually removed from the
+queue. Therefor it is also possible to describe the service of
+Apache Kafka as a distributed log, since messages pile up in
+the queues without ever being deleted if the retention period
+is set to infinity as was done in the current implementation.
+\newline
+
+Because messages that have been produced to a Kafka queue are
+never deleted, it is possible for a consumer to connect to a queue
+that already contains messages and read the messages in the order
+of their arrival, starting from the very first messages. One could
+say that the consumer can read the message \textit{history} of a
+queue, in the same way that \textit{Datomic} allows the accretion
+of facts to build up history, as was introduced in chapter \ref{datomic}.
+
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \includegraphics[scale=0.8, keepaspectratio]{kafka_consumers.png}
+  \caption{Example showing multiple consumers independently reading from
+           the same Apache Kafka queue at different positions.}
+  \label{kafka-consumers}
+\end{wrapfigure}
+
+Furthermore, this \textit{immutability} of the messages allows
+for multiple consumers to read and consume from the same queue
+\textit{concurrently}, as shown in Fig.\ref{kafka-consumers} which
+was taken from \cite{kafka}.
+In RabbitMQ and other message queues that
+implement the AMQP consumers are actually contending for messages
+if they are consuming from the exact same queue. A fan out behavior
+is also possible, this however needs all the consumers to have already
+registered at the fan out component (which is called \textit{Exchange}
+in RabbitMQ) before messages are being produced.
+In Kafka any consumer can start consuming whenever he likes at
+whatever position or message in the queue and completely unaffected
+by any other consumer. Therefor the actual \textit{data queues}
+in the Drift system implementation are Apache Kafka queues.
+
+Because of this immutability and message store rather
+than message queue nature, Kafka implements a \textit{pull-model}
+instead of a \textit{push-model} as used by other message queues
+like RabbitMQ. This pull-model has the client starting at a
+specified message index called \textit{offset} and then pull
+for new messages for a specified duration. When the poll
+duration is over, the poll returns all messages that could be
+fetched during the poll as a batch.
+
+The current Drift implementation uses the Kafa Java API in
+version \texttt{0.10.2}.
+Unfortunately even in this latest Kafka version, the polling for data is
+also used to also signal consumer liveness to the Kafka broker.
+Kafka therefor effectively multiplexes the data channel (polling for data)
+with the signal channel (liveness via heartbeats), resulting
+in the consumer having to constantly repoll in order to not
+be marked as disconnected by the Kafka server.
+This is still true even when the queue the consumer is polling
+on is \textit{deleted} using the external admin tool provided
+by Kafka. Therefor an already ongoing poll is \textit{not}
+interrupted by the queue deletion and any subsequent poll will
+recreate the queue because consumers can also create queues
+as was explained earlier. So any external \textit{problem}
+with a queue must be signaled to consumers via messages inside
+the queue. The only exception that can currently be used to
+interrupt poll is a so called \texttt{WakeupExecption} which
+must be thrown using the \texttt{Kafka.Consumer} object itself,
+by another thread from inside the consumer.
+\newline
+
+This is implemented differently in RabbitMQ. Since RabbitMQ
+implements the push-model, the user specifies callback methods
+which are invoked whenever a message is delivered to the
+consumer and this callback interface also allows to specify
+a method which is triggered whenever the queue on which the
+consumer is currently waiting for messages is deleted.
+A single delete-action on a queue will trigger the delete
+callbacks on \textit{all} consumers currently listening for
+messages on that queue.
+
+Therefor a single logical queue as used by the Drift
+system always uses both: an Apache Kafka queue for the plain
+data and a RabbitMQ queue for signaling any errors to all
+consumers.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.63, keepaspectratio]{system4.pdf}
+  \caption{Example showing the full extent of the Drift back end.
+           Two workers are running, forming a data dependency with
+           one worker consuming from a data queue created by an import
+           and the other working consuming from the output data queue
+           of the first worker.}
+  \label{system4}
+\end{figure}
+
+Fig.\ref{system4} tries to illustrate the full extent of the
+Drift back end. It shows two workers forming a data dependency.
+The first worker, $W_{1}$, received the diamond task which specified
+to consume from the input queue \texttt{c4d245}. Since this is only
+a single data queue, this represent data that was once imported
+because of the import either failing or succeeding there is no need
+any further signal queue for intermediate task failure. The data queues
+(Kafka queues) are named with normal letters whereas the signal
+queues (RabbitMQ queues) are named with italic letters.
+
+After having downloaded the required service from the service registry,
+worker $W_{1}$ spawns another Linux process $P_{1}$
+as specified by the command it received. It then forwards any data
+item it received from the input data queue to this process and
+any data item produced by the process to its output data queue.
+Worker $W_{2}$ does exactly the same independent of $W_{1}$.
+It receives the triangle command, downloads the required service and
+spawns the service as a new Linux process. The triangle command
+contained the hash \texttt{a64e3fc} as an input queue for
+$W_{2}$, so therefor $W_{2}$ consumes from the ouput queue of $W_{1}$
+and produces to its output queue, whose name is the hash of the
+command structure that already contained the hash of the output queue
+of $W_{1}$, as was explained earlier. Since the user queries the
+result of \texttt{bar} and not the result of \texttt{foo}, the shell
+then consumes from the output queue of $W_{2}$ and shows every data
+item received to the user.
+
+Besides the already introduced \textit{Service Registry} a new element
+is shown, namely \textit{Mesos Marathon} \cite{marathon}.
+Marathon is a distributed
+fault tolerant watch dog process that monitors services spawned
+through its interface. If a failure of such a process is detected
+by Marathon, the failed service gets restarted without any further
+effort by the programmer or system administrator. Marathon is one
+component of the \textit{Mesosphere} project which started out
+as a distributed resource negotiator called \textit{Apache Mesos},
+which is now it's probably most widely known component
+\cite{mesosphere}, \cite{mesos}. Since Marathon monitors
+Mesos containers, the workers as well as the service registry are
+executed as Mesos containers.
+\newline
+
+So therefor all of the core components of the back end, both message
+queue frameworks including the task queue and Marathon are run in
+distributed mode. That means that the message queues are automatically
+replicated three times and keep all their messages \textit{only} in RAM.
+Disks are never used. Marathon itself is also replicated three times
+with one master and two slaves in order to provide fault tolerance.
+
+It's important to note that these are the fault tolerance capabilities
+that these tools offer by default. Apache Kafka for instance comes
+with its own Apache ZooKeeper instance for internal distributed
+coordination and distributed consensus that itself is also run in
+distributed mode, meaning being replicated amongst multiple nodes
+\cite{zk}, \cite{zkpaper}.
+
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \includegraphics[scale=0.6, keepaspectratio]{toolstable.pdf}
+  \caption{Overview over the tools and their versions as used
+           in the current implementation.}
+  \label{toolstable}
+  \vspace{-10pt}
+\end{wrapfigure}
+
+Although all of the used tools are open source software, with their
+code being freely available via \textit{Github}, all these tools were
+used without any code modifications. Therefor most of the fundamental
+problems of programming a distributed system, like distributed
+messaging or distributed consensus are being taken care off.
+The main challenge therefor lies \textit{not} in resolving these
+already solved problems but rather in learning how to utilize
+these tools given the vast variety of tools, options, configurations
+and customizations.
+Fig.\ref{toolstable} summarizes all the tools and their versions
+as used by the current implementation.
+\newline
+
+Since now that all of the components of the Drift back end have
+been introduced, the last thing that needs to be discussed is
+the handling of errors. The basic failure model that is assumed
+for the components of the back end (the system) is
+\textit{crash-recovery}. This is realized by using Mesos Marathon
+for spawning, monitoring and restarting the worker processes and
+the service registry. The used message queues again offer the
+restarting of lost queues out of the box.
+
+Before introducing the error cases, Fig.\ref{system5} shows
+the normal mode of operation. This uses the same example as
+was shown earlier, omitting the unnecessary parts. So again
+one can see the two tasks $W_{1}$ and $W_{2}$ processing
+what has been bound by the user to the names \texttt{foo} and
+\texttt{bar} respectively.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.63, keepaspectratio]{system5.pdf}
+  \caption{Example showing the successful completion of two
+           tasks.}
+  \label{system5}
+\end{figure}
+
+Worker $W_{1}$ consumes its input from a data queue which was
+created by importing a local file. After the import has finished,
+the import action itself inserts a special coordination token,
+an \texttt{EOF} token, into the data stream. When worker
+$W_{1}$ has consumed all the data token available in this
+input queue, he will consume the \texttt{EOF} token. This
+signals the end of the input data stream and triggers the
+termination of the spawned process. After the process has
+been gracefully terminated, $W_{1}$ also sends an \texttt{EOF}
+token to its own output queue and starts listening for new
+tasks at the task queue again. Therefor, naturally, whenever
+$W_{2}$ or any other consumer reaches the end of the data
+stream produced by $W_{1}$, it will encounter the \texttt{EOF}
+token of this stream which again triggers the creation
+of its own \texttt{EOF} token.
+
+This showcases an important property of overall Drift back end
+implementation: the only thing that \textit{any} worker needs
+to know is only its immediate environement. Where to read its
+input from and where to produce its output to. If a worker
+is finished, it closes its ouput stream by producing a last
+\texttt{EOF} token, without having any idea whatsoever about
+who or how many other workers might wait for the next token
+and without any global knowledge about the overall
+data dependency graph built up by the user.
+
+This is heavily inspired by \textit{Petri Nets}, a theoretical
+model for describing distributed systems \cite{pnbook}, \cite{pnwiki}.
+The core concepts of Petri Nets are \textit{places}, literally
+places where tokens can reside and \textit{transitions}, actions
+that consume tokens from their input places and produce tokens
+to their output places. The relevant aspect of Petri Nets is that
+whether or not a transition is \textit{enabled} (can fire) only
+depends on the number of tokens on all of its input places.
+Therefor each and every transition is enabled independent of
+any other transition and carries \textit{no} global knowledge about
+the net it is being part of or any other global state which is
+the key property for scalability in the context of distributed
+systems.
+
+In that same spirit, every worker in the Drift system has no
+idea about the overall structure of the system or the complexity
+of the data dependency tree that was and is being created by the
+user. Every worker directly consumes from the inputs contained
+in the task description and produces to an output queue with the
+name of the hash of the task description itself.
+
+Therefor, when the \texttt{EOF} is produced by one worker, it will
+slowly but definitely trickle down whatever data dependency tree
+has been created by the user. Reaching every listening worker
+without ever knowing about them. Every listener will then create
+its own \texttt{EOF} token, therefor propagating the token one
+level further down the dependency tree.
 
 
-
-
-
-% consumer kommt später als producer/data
-% sieht erst das was kommt, seit dem zeitpunkt des erscheinens
-% brauch möglichkeit die history der queue auschecken zu können, von
-% anfang an
-% -> gibt AMQP nicht und damit RabbitMQ nicht her
-% enter Kafka ...
