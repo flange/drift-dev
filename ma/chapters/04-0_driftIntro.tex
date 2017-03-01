@@ -1,0 +1,108 @@
+\section{Drift}
+\label{driftintro}
+
+The last chapter, chapter \ref{RelatedWork}, introduced multiple
+seemingly unrelated software projects and also the people behind
+them and their ideas and principles. However unrelated these projects seem,
+they each contribute to the work presented in the following
+chapters, namely the \textit{Drift} project.
+
+The first idea that was introduced in chapter \ref{LanguageOfTheSystem}
+was the need for a language of the system. A language that would allow
+to orchestrate a possibly distributed or even microservice based system
+from a bird's-eye perspective. In order to allow such a system's
+perspective without depending on global state in the distributed
+context and to keep the complexity arising from the combinatorial
+explosion of contending and interleaving interactions of the
+autonomous and independent components of the system to a minimum,
+the importance of immutable data in the form of value-oriented
+programming was introduced.
+
+Chapter \ref{cuneiform} showed a modern contender for such a
+language and system, namely Cuneiform: a functional scientific
+workflow language, utilizing most of the functional language
+toolbox like lazy-evaluation, single-assign name bindings and
+independent subexpression evaluation as defined by the
+Church-Rosser Theorem \cite{churchrosser}, \cite{churchrosserwiki}.
+However, using Cuneiform and similar systems means fully accepting
+the paradigm of functional programming and abandoning any
+imperative roots of programming, which seems rather radical given
+the wide adoption of imperative languages which shaped the
+way people think about programming for generations.
+
+In order to look for alternatives, chapter \ref{bash} went back
+in time and took a closer look at a system that has already been
+around for decades, namely the UNIX operating system. The interesting
+aspect when it comes to system orchestration and coordination from
+a bird's-eye perspective is of course the UNIX shell. Given
+that the operating system allows for multiple independent
+processes to run seemingly autonomous, the shell not only provides
+mechanisms to spawn these processes but also to connect
+the data flow between them using well-known abstractions like pipes
+and files. Furthermore, the chapter \ref{bash} showed, that when taken
+seriously, the constructs offered by the shell language can even
+be mapped to functional language concepts as used by languages
+like Cuneiform. This revealed that the UNIX shell offers roughly
+the same capabilities in terms of orchestrating a system of
+independent processes \textit{plus} being imperative, widely-known
+and interactive.
+
+Especially the interactiveness delivering immediate feedback is
+something that provides multiple benefits as was introduced in chapter
+\ref{bretvictor} and was something that for the longest time was second
+nature in the realm of functional but not imperative programming.
+
+The ``big problem'' so to speak, when it comes to the design of the
+UNIX shell as well as the operating system itself and the idea of
+porting it to the context of distributed systems is of course the
+file system or more generally the data layer. Since its design
+follows the place-oriented paradigm as introduced in chapter
+\ref{LanguageOfTheSystem}, any subsequent implementations
+using distributed file systems have stuck to the same paradigm
+and therefor run into the same issues.
+
+So in the same way that chapters \ref{cuneiform} and \ref{bash}
+are supposed to challenge the widely accepted believe of
+incompatiblity between functional and imperative language concepts,
+chapters \ref{datomic} and \ref{git} try to challenge the
+preconceptions of distributed immutable data systems and their
+implications. So chapter \ref{datomic} introduces Datomic,
+a distributed immutable facts log when viewed from the user
+perspective, but when looked at from the implementation perspective,
+Datomic only creates the illusion of immutability by putting a thin
+immutability layer on top of widely-known and already existing
+mutable distributed storage solutions. Git on the other hand,
+as introduced in chapter \ref{git}, is the complete opposite. It
+provides the user with a mutable and stateful perspective on her
+own file system built on top of an immutable content addressable
+file system underneath.
+
+This again challenges the widespread believe that immutability
+or statefulness are system design primitives that define the
+system to its core and must be applied throughout the whole system
+stack, up to the user interface.
+\newline
+
+So naturally the challenge arose, of whether or not it would be
+possible to build an imperative and distributed
+shell language with a flat learning curve using well known
+imperative concepts  but with the same orchestrational powers and
+interactiveness as provided by functional languages on top of
+an immutable distributed file system in order to utilize the
+benefits of the value-oriented approach and to keep the contention
+and complexity of the whole system to a minimum.
+\newline
+
+The following chapters will present the current result of that challenge
+by first introducing the \textit{Drift language}, a tiny and abstract
+microservice coordination language built on the concepts of names,
+namespaces and services. Then its distributed implementation including
+the immutable \textit{Drift file system} will be presented, which
+provides the illusion of a file system by utilizing distributed
+message queues. Finally the \textit{Drift UI} will be presented
+which is implemented as a web interface for any modern browser
+and contains not only the shell but also a visual live-representation
+of the system state using the well known Petri Net syntax as well as
+a time bar that allows to revisit old system states.
+
+

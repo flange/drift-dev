@@ -1,0 +1,46 @@
+\documentclass[
+	a4paper,
+	pagesize,
+	pdftex,
+	12pt,
+	twoside, % + BCOR darunter: für doppelseitigen Druck aktivieren, sonst beide deaktivieren
+	BCOR=5mm, % Dicke der Bindung berücksichtigen (Copyshop fragen, wie viel das ist)
+	ngerman,
+	fleqn,
+	final,
+	]{scrartcl}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc} % Eingabekodierung: UTF-8
+\usepackage{fixltx2e} % Schickere Ausgabe
+\usepackage[T1]{fontenc} % ordentliche Trennung
+\usepackage[ngerman]{babel}
+\usepackage{lmodern} % ordentliche Schriften
+\usepackage[unicode=true]{hyperref}
+\usepackage{setspace,graphicx,tikz,tabularx} % für Elemente der Titelseite
+\usepackage[draft=false,babel,tracking=true,kerning=true,spacing=true]{microtype} % optischer Randausgleich etc.
+
+\begin{document}
+
+% Beispielhafte Nutzung der Vorlage für die Titelseite (bitte anpassen):
+\input{Institutsvorlage}
+\titel{Von Kraut und Rüben -- eine vergleichende Betrachtung des Wurzelwerks verschiedener Ackernutzpflanzen} % Titel der Arbeit
+\typ{Masterarbeit} % Typ der Arbeit:  Diplomarbeit, Masterarbeit, Bachelorarbeit
+\grad{Master of Science (M. Sc.)} % erreichter Akademischer Grad
+% z.B.: Master of Science (M. Sc.), Master of Education (M. Ed.), Bachelor of Science (B. Sc.), Bachelor of Arts (B. A.), Diplominformatikerin
+\autor{Maxime Mustermann} % Autor der Arbeit, mit Vor- und Nachname
+\gebdatum{1.1.1970} % Geburtsdatum des Autors
+\gebort{Bielefeld} % Geburtsort des Autors
+\gutachter{Prof. Dr. Dr. hc. mult. Kerstin von Kienfeld}{Prof. Dr. Bernd Blume} % Erst- und Zweitgutachter der Arbeit
+\mitverteidigung % entfernen, falls keine Verteidigung erfolgt
+\makeTitel
+
+% Hier folgt die eigentliche Arbeit (bei doppelseitigem Druck auf einem neuen Blatt):
+\tableofcontents
+
+\section{Einleitung}
+Hier entsteht eine großartige Arbeit\ldots
+
+% Erzeugen der Selbständigkeitserklärung auf einem neuen Blatt:
+\selbstaendigkeitserklaerung{\today}
+
+\end{document}

@@ -1,0 +1,331 @@
+\subsection{The Importance of Names}
+\label{importanceofnames}
+
+Developing a programming language can be an overwhelmingly
+ambitious task. Most often it's only that when one sets out
+to do so, that one realizes how many features even
+basic languages offer: arithmetic, different types of loops,
+conditionals, logical operators, built-in data types and a
+type system that allows for arbitrary user-defined types.
+Depending on the overall paradigm the list might continue
+with things like classes, objects, inheritance, polymorphism
+and generic types or things like type classes, higher-order
+functions, partial application or monads and do-notation.
+
+Although it would have been nice to have at least scratched on
+some of these aspects, it became clear right at the beginning
+that most of these features would be left untouched given the
+scope and resources of the work presented here.
+
+But that is not necessarily a bad thing. Constraints often times
+have the benefit that they force resources to be spent on what
+really matters and so in that same spirit the goal for the
+Drift coordination language was to carve out what is
+\textit{essential} to programming. It could almost be said that
+the goal was to find the smallest possible language that
+would not allow for any construct to be taken out and still be
+offering the same possibilities.
+\newline
+
+So what is the essence of programming?
+
+Well that depends on what the user is supposed to be able to express
+in that language. If it's computation through calculation, built-in
+arithmetic operators like $+$ or $*$ might seem a good idea. If
+the user should be able to express things that model the real world,
+like in many simulation contexts for example, having constructs
+that represent real world objects and allow for equipping them with
+properties like color or weight could be another sensible approach,
+built on basic arithmetic. This would naturally lead to built-in
+data types for which these basic arithmetic operators are
+defined and would build up to a type system which could deal with
+arbitrary user-defined types and the operations defined on them.
+
+But defining these structures, functions or classes and modelling their
+properties and functionalities is only one part of constructing
+a program because these structures in and by themselves have nothing
+on which they could execute their behavior on and are not connected
+in any way in order to produce a final output as the result of
+multiple functionalities chained together.
+
+A program does not only exist as the mere sum of its parts but
+also of a description of how these parts interact and compose and
+where data comes from and where it goes which is what is mostly
+described inside the \textit{main-method} which virtually
+all programming languages independent of their paradigm have in
+common because it serves as the universal starting point of a program.
+
+Most languages use the same syntax and semantics
+for both purposes: for describing the individual components and for
+describing their often times more abstract orchestration.
+This is demonstrated by the examples shown in Fig.\ref{c-and-java}.
+
+\begin{figure}[h!]
+    \vspace{5mm}
+    \begin{subfigure}[b]{0.41\textwidth}
+
+    \begin{lstlisting}
+#include <stdio.h>
+
+struct point {
+  int x;
+  int y;
+};
+
+int point_sum(struct point p) {
+  return (p.x + p.y);
+}
+
+int main() {
+
+  struct point p;
+  p.x = 3;
+  p.y = 5;
+
+  printf("%d\n", point_sum(p));
+
+  return 0;
+}
+    \end{lstlisting}
+
+      \caption{Component definition and orchestration in C.}
+      \label{fig:c-example}
+    \end{subfigure}
+    \hfill
+    \vspace{10pt}
+    \begin{subfigure}[b]{0.54\textwidth}
+
+    \begin{lstlisting}
+public class Point {
+  private int x;
+  private int y;
+
+  public Point(int x, int y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  public int getSum() {
+    return (this.x + this.y);
+  }
+
+  public static void main(String[] args){
+
+    Point p = new Point(3, 5);
+    System.out.println(p.getSum());
+
+    return;
+  }
+}
+    \end{lstlisting}
+
+      \caption{Component definition and orchestration in Java.}
+      \label{fig:java-example}
+    \end{subfigure}
+
+  \caption{Examples of component definition and orchestration done in
+           languages that use the same language for both tasks.}
+  \label{c-and-java}
+
+\end{figure}
+
+The left hand side figure, Fig.\ref{c-and-java}a, shows an example
+using the C programming language. In it, a new compound user-defined
+data type \textit{point} is declared and defined, consisting of two
+integers representing the x and y coordinates of a point.
+Then a function is declared and defined which takes such a point
+as an input and returns the sum of its coordinates.
+
+These are the blue prints of the components of this tiny system.
+Inside the main-methode an instance of a point is created and
+its coordinates are set to the values 3 and 5, which are part of
+the source code itself. Then a function call is issued using a copy of
+this point instance which creates a single instance of the mentionend
+function whose return value is then immediately printed to the screen.
+
+So inside the main method the actual \textit{business logic} of
+the program is described by composing and chaining instances of the
+described components and inserting data into the system and letting
+it flow through the components in order to produce the desired output.
+\newline
+
+The same thing happens in the example on the right hand side, in
+Fig.\ref{c-and-java}b, this time using the object oriented
+programming language Java. In this example a class \textit{Point} is
+defined, also using two integers to represent its coordinates.
+The class defines two methods: a constructor method for ease of
+instantiation and a \textit{getSum(int, int)} method to again
+calculate the sum of the coordinates.
+
+As with the C example on the left, this plain class definition
+by itself would not make for much of a program. The business logic
+is again defined in the main-method, where an instance of the Point
+class, a Point object, is instantiated (again with data contained
+inside the source code file itself) and the result of a call to
+its instance method \textit{getSum} is printed.
+\newline
+
+However, it is possible to disentangle the component description
+from the higher level component composition. One example of this
+has already been introduced, namely the UNIX stack as shown in
+Fig.\ref{unixstack}. In this stack, each component is a UNIX
+process, dealing only with the task of processing the data its
+been given and producing its output respectively. The higher-level
+business logic of the system is then defined using the shell
+which can be used to instantiate components (processes),
+just like objects are instantiated in Java, and describe the data
+flow between them. The difference is, that the shell language, the
+\textit{coordination language} is completely
+different compared to the \textit{computation language} used to
+describe the computation done by each individual process.
+
+So which of the two, computation or coordination, is actually
+more relevant in the context of programming a distributed system?
+Well, how would one distribute a computation like $1 + 2$?
+Computation in and by itself has something local about it because
+the operator needs to have perceived or received its operands in
+order to carry out its computation. The \textit{distributedness}
+actually emerges because although each individual operation is
+carried out on a local machine, the actuall composition of multiple
+operations and data flow through them spans multiple locations, i.e.
+multiple machines.
+
+So as I have already tried to argue in chapter \ref{LanguageEvolution},
+for the context of distributed systems, it's not so much computation
+that defines the programming of distributed systems (because
+of computation having this inherently local aspect to it, we
+can for the most part reuse the already existing computation languages)
+but rather \textit{coordination} and \textit{communication} between
+the components and operations residing on different machines.
+\newline
+
+So the question of what is the essence of programming
+changes in the context of distributed systems and therefor for the
+context of this work to: what is the essence of composition?
+\newline
+
+To me, as far as I can work out, the essence of composition
+is simply \textit{data} and \textit{functionality}. Whether
+functionality is provided by plain functions modelled after
+the example of mathematical functions, or with objects that
+encapsulate functionality via methods, or with actors or
+processes or microservices is not really important.
+
+I believe the user needs these two things: she needs to be
+able to identify and talk about her data and she needs to be
+able to identify and invoke her services with that data.
+This also includes identifying the data that might be the
+result of such a service invocation.
+
+So what's the most natural way for \textit{people} to identify things?
+By giving them \textit{names}. Names that carry \textit{meaning}
+and therefor provide semantics (for humans).
+\newline
+
+\textit{Meaning} is an interesting word and one can easily find examples
+where it is ascribed to mechanisms that do not really provide it.
+For example one of the fundamental books on programming language
+semantics and type systems, \textit{Types and Programming Languages}
+by Pierce \cite{pierce} contains the following quote by Mark Manasse
+on page 208:
+
+\begin{quote}
+The fundamental problem addressed by a type theory is to ensure
+that programs have meaning. The fundamental problem caused by a
+type theory is that meaningful programs may not have meanings ascribed
+to them. The quest for richer type systems results from this tension.
+\end{quote}
+
+In this quote, type systems are identified as the source of
+meaning for programs and there is some truth to that. But I
+would like to argue that it is not the type system itself that
+provides the meaning, but rather the \textit{names} of the types
+that do so.
+\newpage
+
+\begin{wrapfigure}{l}{0.54\textwidth}
+  \begin{lstlisting}
+void runServer(ServerSocket serverSock) {
+  serverSock.listenOnPort(9000);
+}
+  \end{lstlisting}
+
+
+  \begin{lstlisting}
+void runServer(Uhjgj abcdeg) {
+  abcdeg.inufdhg(9000);
+}
+  \end{lstlisting}
+
+  \begin{lstlisting}
+void runServer(143 abcdeg) {
+  abcdeg.inufdhg(9000);
+}
+  \end{lstlisting}
+  \caption{Example showing the importance of \textit{names} for
+           human understanding and reasoning about code.}
+  \label{type-names}
+\end{wrapfigure}
+
+Consider for example the three versions of the same function in
+Fig.\ref{type-names}. The first version represents the kind of
+code that is used in software development today, using meaningful
+names not only for the data types but for the variable names as well.
+This makes it easy for humans to understand why a server socket
+has a method that triggers listening on a port and why this method
+receives a number as input. Most of the meaning is conveyed through
+the names, if chosen appropriately.
+
+In the second version the names are obfuscated but still used as
+expected by the compiler. This will happily compile, but most of its
+meaning is gone. The third version reduces the type identifier to
+a number. Most language grammars do not allow for type names to
+be numbers, so this won't compile but the type checking engine itself
+would probably still accept it. Because to the type checker, the type
+is just an ID and as along as it can check whether or not the type
+with the ID 143 provides a method with the used identifier and
+signature, it would not raise any flags.
+\newline
+
+The \textit{meaning} is not conveyed by types. It's conveyed
+by the \textit{names} of the types and of course the names of
+variables, methods, classes, objects, and so on.
+\newline
+
+\begin{wrapfigure}{l}{0.4\textwidth}
+  \begin{lstlisting}
+int add_one(int n) {
+  return (n - 1);
+}
+  \end{lstlisting}
+  \caption{Example showing a bug that cannot be detected by
+           the compiler or type checker.}
+  \label{add-one}
+\end{wrapfigure}
+
+Consider another example, shown in Fig.\ref{add-one}. This example
+shows a simple function whose name suggests that it returns its
+argument incremented by one. Unfortunately its code does the exact
+opposite and returns the decremented input. This will also
+happily compile because \textit{add\_one} is a valid function identifier
+and \textit{n - 1} is a valid operation on integers. But we as people
+will immediate spot the mismatch between the meaning of its name and
+its provided functionality.
+
+So when one tries to reduce coordination down to its core parts,
+namely data and services, the essential abstract thoughts that can
+be expressed by the programmer are something like ``do this on that'',
+or ``do this on that and put the result there'', or ``do this
+on that and then that and put the final result over there''.
+Interestingly even on such an abstract and rather comical scale,
+these abstract statements can be categorized into two groups.
+They are either describing a functionality chain, where each
+component depends on the output of its predecessor and they
+all form a sort of pipeline through which the data flows
+sequentially or the services are completely independent of
+one another.
+
+So naturally the formulation of data and services forms a
+dependency tree or, depending on the allowed complexity,
+a directed acyclic graph (DAG). Which can be used effectively
+for visualizations as will be shown in later chapters.
