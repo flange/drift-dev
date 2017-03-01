@@ -1,0 +1,69 @@
+body {
+  background-color: #ffffff;
+}
+
+#wrapper {
+  font-family: monospace;
+
+  width: 1250px;
+  height: 500px;
+  /* border: 1px solid black; */
+
+  overflow: hidden;
+
+}
+
+#shell {
+  width: 500px;
+  height: 500px;
+
+  float:left;
+}
+
+#graph {
+  float: left;
+}
+
+#timeline {
+  float: left;
+  overflow: scroll;
+}
+
+.node circle {
+  stroke: #000;
+  fill: #fff;
+  stroke-width: 2px;
+}
+
+.node ellipse {
+  stroke: #000;
+  fill: #fff;
+  stroke-width: 2px;
+}
+
+.node rect {
+  stroke: #000;
+  fill: #fff;
+  stroke-width: 2px;
+}
+
+.edgePath path {
+  stroke: #000;
+  fill: #000;
+  stroke-width: 1.5px;
+}
+
+/* This styles the title of the tooltip */
+.tipsy .name {
+  font-family: monospace;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #60b1fc;
+  margin: 0;
+}
+
+/* This styles the body of the tooltip */
+.tipsy .description {
+  font-family: monospace;
+  font-size: 1.2em;
+}

@@ -1,0 +1,131 @@
+<!doctype html>
+
+<meta charset="utf-8">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="dagre-d3.js"></script>
+
+<style id="css">
+body {
+  font: 300 14px 'Helvetica Neue', Helvetica;
+}
+
+
+.node circle {
+  stroke: #000;
+  fill: #fff;
+  stroke-width: 2px;
+}
+
+.edgePath path {
+  stroke: #000;
+  fill: #000;
+  stroke-width: 1.5px;
+}
+
+</style>
+
+
+<svg width=500 height=500><g/></svg>
+<br>
+<button id="button1">Add B</button>
+<button id="button2">Remove B</button>
+
+
+<script id="js">
+
+var drawGraph = function() {
+  console.log("draw");
+  g.graph().transition = function(selection) {
+    return selection.transition().duration(500);
+  };
+
+  // Create the renderer
+  var render = new dagreD3.render();
+
+  // Run the renderer. This is what draws the final graph.
+  render(inner, g);
+}
+
+var removeB = function() {
+
+  g.removeNode("B");
+  drawGraph();
+}
+
+var addB = function() {
+
+  g.setNode("B", {shape: "circle" });
+
+  g.setEdge("A", "B", {
+    lineInterpolate: 'basis'
+  });
+
+  drawGraph();
+}
+
+
+$(function(){
+  $("#button1").click(function() {
+    addB();
+  });
+
+  $("#button2").click(function() {
+    removeB();
+  });
+});
+
+
+
+
+
+
+
+// Create a new directed graph
+var g = new dagreD3.graphlib.Graph().setGraph({});
+
+g.setNode("A", {shape: "circle" });
+g.setNode("B", {shape: "circle" });
+
+g.setEdge("A", "B", {
+  lineInterpolate: 'basis'
+});
+
+
+
+var svg = d3.select("svg");
+var inner = svg.select("g");
+
+
+var borderPath = svg.append("rect")
+.attr("x", 0)
+.attr("y", 0)
+.attr("height", 500)
+.attr("width", 500)
+.style("stroke", 'black')
+.style("fill", "none")
+.style("stroke-width", 5);
+
+
+
+// Set up zoom support
+var zoom = d3.behavior.zoom().on("zoom", function() {
+      inner.attr("transform", "translate(" + d3.event.translate + ")" +
+                                  "scale(" + d3.event.scale + ")");
+    });
+//svg.call(zoom);
+
+// Create the renderer
+var render = new dagreD3.render();
+
+// Run the renderer. This is what draws the final graph.
+render(inner, g);
+
+var xCenterOffset = (svg.attr("width") - g.graph().width) / 2;
+inner.attr("transform", "translate(" + xCenterOffset + ", 20)");
+//svg.attr("height", g.graph().height + 40);
+
+</script>
+

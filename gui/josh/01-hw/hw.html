@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.2/underscore-min.js"></script>
+
+  <script>Josh = {Debug: true };</script>
+  <script src="js/killring.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/readline.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/pathhandler.js"></script>
+  <style type="text/css">
+
+    #shell-panel {
+      height: 500px;
+      width: 30%;
+      background-color: #000000;
+      color: #00fe00;
+      padding: 20px 20px 20px 20px;
+      font-family: 'Source Code Pro';
+      overflow: scroll;
+      overflow-x: hidden;
+      overflow-y: scroll;
+      border: 1px dashed #E6EBE0;
+    }
+
+    #shell-cli .prompt {
+      font-weight: bold;
+    }</style>
+
+
+  <script>
+    $(document).ready(function() {
+      var history = new Josh.History({ key: 'josh.helloworld'});
+      var shell = Josh.Shell({history: history});
+
+
+      shell.onNewPrompt(function(callback) {
+        callback(".> ");
+      });
+
+
+      shell.setCommandHandler("hello", {
+        exec: function(cmd, args, callback) {
+          var arg = args[0] || '';
+          var response = "who is this " + arg + " you are talking to?";
+          if(arg === 'josh') {
+            response = 'pleased to meet you.';
+          } else if(arg === 'world') {
+            response = 'world says hi.'
+          } else if(!arg) {
+            response = 'who are you saying hello to?';
+          }
+          callback(response);
+        },
+        completion: function(cmd, arg, line, callback) {
+          callback(shell.bestMatch(arg, ['world', 'josh']))
+        }
+      });
+
+
+      shell.activate();
+
+    });
+  </script>
+
+
+</head>
+
+<body>
+    <div id="shell-panel">
+      <div id="shell-view"></div>
+    </div>
+
+</body>
+
+</html>

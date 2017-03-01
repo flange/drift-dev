@@ -1,0 +1,11 @@
+digraph {
+  "test.txt" [shape="ellipse" description="Import"];
+  b [shape="ellipse" description="Cat test.txt"];
+  c [shape="ellipse" description="c"];
+  d [shape="ellipse" description="d"];
+
+  "test.txt" -> b [lineInterpolate="basis"];
+  "test.txt" -> c [lineInterpolate="basis"];
+  b -> d [lineInterpolate="basis"];
+  c -> d [lineInterpolate="basis"];
+}

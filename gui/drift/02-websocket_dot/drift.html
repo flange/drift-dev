@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <script src="js/underscore-min.js"></script>
+
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="js/dagre-d3.js"></script>
+
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="js/tipsy.js"></script>
+
+  <script src="js/josh/killring.js"></script>
+  <script src="js/josh/history.js"></script>
+  <script src="js/josh/readline.js"></script>
+  <script src="js/josh/shell.js"></script>
+  <script src="js/josh/pathhandler.js"></script>
+
+  <script src="js/jqueryterminal/jquery.terminal-0.11.18.js"></script>
+
+  <script src="js/timeknots.js"></script>
+  <script src="js/graphlib-dot.js"></script>
+
+  <link rel="stylesheet" href="css/jqueryterminal/jquery.terminal.css"/>
+  <link rel="stylesheet" href="css/tipsy.css">
+  <link rel="stylesheet" href="css/drift.css">
+
+
+
+
+
+
+
+  <script>
+/*
+    var ws = new WebSocket("ws://localhost:9000");
+
+    ws.onopen = function()
+    {
+      // Web Socket is connected, send data using send()
+      ws.send("Message to send");
+      console.log("WS:send()");
+    };
+
+    ws.onmessage = function (evt)
+    {
+      var received_msg = evt.data;
+      console.log("WS:recv(): " + received_msg);
+    };
+
+    ws.onclose = function()
+    {
+      // websocket is closed.
+      console.log("WS:closed()");
+    };
+*/
+
+
+
+  var g;
+  var svg;
+  var inner;
+  var zoom;
+  var socket;
+
+
+  var initGlobal = function() {
+
+    // Graph
+    g = new dagreD3.graphlib.Graph().setGraph({});
+
+    svg = d3.select("svg");
+    inner = svg.select("g");
+
+    var borderPath = svg.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("height", 500)
+    .attr("width", 500)
+    .style("stroke", 'black')
+    .style("fill", "none")
+    .style("stroke-width", 5);
+
+    zoom = d3.behavior.zoom().on("zoom", function() {
+        inner.attr("transform", "translate(" + d3.event.translate + ")" +
+                                    "scale(" + d3.event.scale + ")");
+      });
+    svg.call(zoom);
+
+
+
+    // Websocket
+    socket = new WebSocket("ws://localhost:9000");
+
+    socket.onopen = function() {
+      socket.send("hi");
+      console.log("connected");
+    }
+
+    socket.onmessage = function(evt) {
+      console.log("got graph");
+
+      g = graphlibDot.read(evt.data);
+      console.log(g.nodes());
+
+      drawGraph();
+    }
+
+    socket.onclose = function() {
+      console.log("closed");
+    }
+
+  }
+
+  var handleSocketMsg = function(evt) {
+      console.log("Socket:recv(): " + evt.data);
+  }
+
+  var initGraph = function() {
+    g.setNode("data", {shape: "ellipse", description: "import"});
+    drawGraph();
+  }
+
+  var initShell = function() {
+    $("#shell").terminal(function(cmd, term) {
+      handleCmd(cmd, term);
+
+    }, {greetings: "", prompt: '.> ', name: 'test'});
+  }
+
+  var styleTooltip = function(name, description) {
+    return "<p class='name'>" + name + "</p><p class='description'>" + description + "</p>";
+  };
+
+  var drawGraph = function() {
+    g.graph().transition = function(selection) {
+      return selection.transition().duration(500);
+    };
+
+    var render = new dagreD3.render();
+    render(inner, g);
+
+    inner.selectAll("g.node")
+      .attr("title", function(v) {
+
+        if (g.node(v) == null)
+          return;
+
+        return styleTooltip(v, g.node(v).description)
+        })
+      .each(function(v) {
+        $(this).tipsy({ gravity: "w", opacity: 1, html: true });
+      });
+
+
+    var xCenterOffset = (svg.attr("width") - g.graph().width) / 2;
+    inner.attr("transform", "translate(" + xCenterOffset + ", 20)");
+  }
+
+  var addNode = function(srcs, service, resultName, cmd) {
+    console.log("addNode() srcs: " + srcs + " service: " + service + " res: " + resultName);
+
+    var desc = cmd.split(' ').slice(2).join(' ');
+
+    resultLabel = resultName;
+
+    if (g.hasNode(resultName)) {
+      console.log("res exists: " + resultName);
+
+      var producerName = g.predecessors(resultName)[0];
+
+      var oldResultName = resultName + "'";
+
+
+      // save old result place
+      g.removeEdge(producerName, resultName);
+      g.setNode(oldResultName, {
+        label: oldResultName,
+        shape: "ellipse",
+        style: "stroke-dasharray: 5, 5",
+        description: g.node(resultName).description}
+      );
+
+      // dash oldproducer -> oldresult edge
+      g.setEdge(producerName, oldResultName, {style: "stroke-dasharray: 5, 5", lineInterpolate: 'basis'});
+
+      var oldProducerDesc = g.node(producerName).description;
+
+      // dash oldproducer
+      g.setNode(producerName, {style: "stroke-dasharray: 5, 5", description: oldProducerDesc});
+
+
+      // rearrange and dash out-edges
+      var succs = g.successors(resultName);
+
+      for (var i = 0; i < succs.length; i++) {
+        g.removeEdge(resultName, succs[i]);
+        g.setEdge(oldResultName, succs[i], {style: "stroke-dasharray: 5, 5", lineInterpolate: 'basis'});
+      }
+
+
+      // dash in-edges
+      var inEdges = g.inEdges(resultName);
+
+      for (var i = 0; i < inEdges.length; i++)
+        g.setEdge(inEdges[i].v, inEdges[i].w, {style: "stroke-dasharray: 5, 5"});
+
+
+
+
+      // remove old edges
+      var producerInEdges = g.inEdges(producerName);
+
+      for (var i = 0; i < producerInEdges.length; i++)
+        //g.removeEdge(producerInEdges[i]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+      //g.removeNode(producerName);
+      //g.removeNode(resultName);
+      drawGraph();
+    }
+
+    g.setNode(service, {shape: "rect", description: desc});
+    g.setNode(resultName, {label: resultLabel, shape: "ellipse", description: desc});
+
+
+    for(var i = 0; i < srcs.length; i++)
+      g.setEdge(srcs[i], service, {lineInterpolate: 'basis'});
+
+
+    g.setEdge(service, resultName, {
+      //style: "stroke: blue",
+      //arrowheadStyle: "fill: blue",
+      lineInterpolate: 'basis'}
+    );
+
+    drawGraph();
+  }
+
+  var handleCmd = function(cmd, term) {
+    var split = cmd.split(" ");
+    var resultName = split[0];
+    var service = split[2];
+
+    addNode(split.slice(3), service, resultName, cmd);
+
+  }
+
+
+  var mySchedule = [
+    {name:"A", date: "2012-09-28T00:00:00"},
+    {name:"B", date: "2012-09-28T01:00:00"},
+    {name:"C", date: "2012-09-28T02:00:00"},
+
+  ];
+
+
+
+  $(document).ready(function() {
+    initGlobal();
+    initGraph();
+    initShell();
+
+    TimeKnots.draw("#timeline", mySchedule, {horizontalLayout: false, color: "black", height: 100, width:100, showLabels: false, dateFormat: ""});
+  });
+
+
+
+
+
+
+
+
+
+  </script>
+
+</head>
+
+<body>
+  <div id="wrapper">
+
+    <div id="shell"></div>
+
+    <div id="graph">
+      <svg id="graph-svg" width=500 height=500><g/></svg>
+    </div>
+
+    <div id="timeline" style="width:200px;height: 500px;"></div>
+
+  </div>
+
+
+
+
+
+
+
+</body>
+
+</html>
