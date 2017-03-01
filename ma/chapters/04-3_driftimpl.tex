@@ -56,6 +56,9 @@ basic idea of how this looks in the current implementation.
   \label{system-abstract}
 \end{figure}
 
+\subsubsection{Drift Shell}
+\label{driftshell}
+
 The shell's job is to present the user with a textual interface
 and send any valid commands as tasks to the system. Therefor
 the shell is \textit{not} part of the system per se. It runs
@@ -119,8 +122,9 @@ chapter, chapter \ref{driftlang}. This is also one aspect of the
 implementation of the closure behavior of service invocations as
 demanded by the Drift language, as was also presented in the last
 chapter.
-\newline
 
+\subsubsection{Drift FS}
+\label{driftfs}
 When the command that was entered by the user is valid, a
 task description is generated and send to the \textit{task queue}.
 There is only  \textit{one} designated task queue. The task description
@@ -179,7 +183,11 @@ to consume from or produce to. So when the user queries the name,
 that was bound to the result of the command that was entered
 earlier, the shell looks up the hash-name from the user-defined
 name and consumes from the data queue with that name in order to show
-the result to the user.
+the result to the user. However, for data that was imported into
+the system no such task description exists. Therefor the import
+command is implemented as using the full content hash of the imported
+data, which unfortunately is expensive in terms of compute resources
+on the client (the shell).
 \newline
 
 The whole data layer of the system is implemented using distributed
@@ -209,7 +217,9 @@ and persistence. This means that the shell can listen on the
 resulting data queue represented by name and as soon as the first
 data token is produced by a worker into that queue, consume this
 token and present it to the user.
-\newline
+
+\subsubsection{Execution Engine}
+\label{distributedexecution}
 
 In order to illustrate the detailed processing of a task,
 Fig.\ref{system2} shows the basic steps that are taken by the
@@ -517,8 +527,68 @@ of $W_{1}$, as was explained earlier. Since the user queries the
 result of \texttt{bar} and not the result of \texttt{foo}, the shell
 then consumes from the output queue of $W_{2}$ and shows every data
 item received to the user.
+\newline
 
-Besides the already introduced \textit{Service Registry} a new element
+The examples so far have shown the detailed execution of services
+dealing only with regular data which is either bound to
+a single name and then later queried by the user or directly
+printed to the screen when received by the shell. But as was
+introduced in chapter \ref{driftlang} there are also tasks that
+receive or produce a \textit{namespace}.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.63, keepaspectratio]{dirqueue.pdf}
+  \caption{Example showing the creation of a namespace using
+           directory queues that contain the original file name
+           and their hash name and the actual data queues representing
+           files.}
+  \label{dirqueue}
+\end{figure}
+
+Figure \ref{dirqueue} shows how the creation of a namespace
+is implemented by the Drift back end. As can be seen the user
+issues the \texttt{Untar*} command that was already introduced
+earlier. The asterix on the right side of the command name
+indicates that it produces a namespace and therefor
+its result must also be bound to a namespace, as indicated by
+the \texttt{/} in the name \texttt{res/}.
+
+After commiting the task to the task queue the shell inserts
+its hash into its name table, so the namespace \texttt{res/}
+is listed by \texttt{ls} and is also queriable. Querying a
+namespace results in effectively querying what is called the
+\textit{directory queue}, because of the close resemblance of
+names and namespaces to directories and files in the original
+UNIX file system.
+
+The worker receives the task, which is shown as step $1$,
+and then receives its input data from the appropriate queue,
+namely the queue that contains the \texttt{.tar} file which
+that was created by an import as indicated by the name. This
+is shown as step $2$.
+Now for every resulting name in the namespace the worker will
+first \textit{publish} its name and its hash to the directory
+queue with the hash being again the content hash of the extracted
+file in the case of \texttt{Untar*}. Therefor the this name would
+now be available as a name inside the \texttt{res/} namespace
+in the shell and could be used for further commands. This is shown
+as step $3$ in Fig.\ref{dirqueue}. The worker
+will then start to fill the data queue of the published name which
+is step $4$.
+When it finished the first name, it will publish the next name
+and start filling its data queue until every name in the namespace
+has been created, which is illustrated by step $5$ and $6$
+\footnote{In this example the dashed queues do \textit{not} represent any
+signal queues but are just supposed to illustrate the entries
+of the directory queue.}.
+
+So therefor not only the data behind names is streamed, but also
+the content of namespaces is stream as well as the data behind the
+names contained in that namespace.
+\newline
+
+Going back to the full back end overview as shown in Fig.\ref{system4},
+a new element besides the already introduced \textit{Service Registry}
 is shown, namely \textit{Mesos Marathon} \cite{marathon}.
 Marathon is a distributed
 fault tolerant watch dog process that monitors services spawned
@@ -566,7 +636,9 @@ these tools given the vast variety of tools, options, configurations
 and customizations.
 Fig.\ref{toolstable} summarizes all the tools and their versions
 as used by the current implementation.
-\newline
+
+\subsubsection{Error Model}
+\label{errormodel}
 
 Since now that all of the components of the Drift back end have
 been introduced, the last thing that needs to be discussed is
@@ -587,7 +659,7 @@ what has been bound by the user to the names \texttt{foo} and
 \begin{figure}[h]
   \includegraphics[scale=0.63, keepaspectratio]{system5.pdf}
   \caption{Example showing the successful completion of two
-           tasks.}
+           tasks and the propagation of the \texttt{EOF} token.}
   \label{system5}
 \end{figure}
 
@@ -598,7 +670,7 @@ an \texttt{EOF} token, into the data stream. When worker
 $W_{1}$ has consumed all the data token available in this
 input queue, he will consume the \texttt{EOF} token. This
 signals the end of the input data stream and triggers the
-termination of the spawned process. After the process has
+termination of the spawned process $P_{1}$. After the process has
 been gracefully terminated, $W_{1}$ also sends an \texttt{EOF}
 token to its own output queue and starts listening for new
 tasks at the task queue again. Therefor, naturally, whenever
@@ -607,9 +679,17 @@ stream produced by $W_{1}$, it will encounter the \texttt{EOF}
 token of this stream which again triggers the creation
 of its own \texttt{EOF} token.
 
-This showcases an important property of overall Drift back end
+This \texttt{EOF} mechanism is of course also used when
+dealing with the creation of namespaces and therefor
+directory queues, as for example shown in Fig.\ref{dirqueue}.
+Each individual name will be finished by inserting the \texttt{EOF}
+token into its data queue and at last the worker will finish
+up the directory queue by also inserting the \texttt{EOF} token.
+\newline
+
+This showcases an important overall property of the Drift back end
 implementation: the only thing that \textit{any} worker needs
-to know is only its immediate environement. Where to read its
+to know is only its immediate environement, i.e. where to read its
 input from and where to produce its output to. If a worker
 is finished, it closes its ouput stream by producing a last
 \texttt{EOF} token, without having any idea whatsoever about
@@ -635,14 +715,346 @@ In that same spirit, every worker in the Drift system has no
 idea about the overall structure of the system or the complexity
 of the data dependency tree that was and is being created by the
 user. Every worker directly consumes from the inputs contained
-in the task description and produces to an output queue with the
-name of the hash of the task description itself.
+in the task description and produces to an output queue named after
+the hash of the task description itself.
 
-Therefor, when the \texttt{EOF} is produced by one worker, it will
+Therefor, when the \texttt{EOF} token is produced by one worker, it will
 slowly but definitely trickle down whatever data dependency tree
 has been created by the user. Reaching every listening worker
 without ever knowing about them. Every listener will then create
 its own \texttt{EOF} token, therefor propagating the token one
 level further down the dependency tree.
+\newline
+
+Given the invariant of the system that service invocations are
+\textit{deterministic} and using the described setup, the system
+differentiates between two error cases: either a \textit{system failure}
+or a \textit{user failure}.
+
+A user failure is encountered whenever a task issued by the user
+made it to the task queue but leads to an error when it is finally
+executed by the worker. For instance this could be case whenever
+the user issues a command in which a service consumes some input
+but the process that is spawns expects a different input format
+as provided by the input queue specified by the user. Naturally
+this will lead to an error produced by the forked process and
+will result in the cancelation of the task.
+
+Unfortunately these types of errors, the user errors, cannot be
+resolved by the system. Under the assumption and system invariant
+that tasks are deterministic, it holds that a task that led to
+a processing error, will recreate the same error if executed again.
+Therefor restarting the task using a different worker would only
+lead to the same error result. Therefor the whole task needs to
+be marked as erroneous and to do that the worker will produce
+the only other special control token besides the \texttt{EOF} token,
+a \texttt{ERR} token. This \texttt{ERR} token is inserted into the
+output data queue of the task and the worker will signal the task
+completion to the task queue, so no other worker will receive
+that task. Therefor the error result is forever persisted with
+this specific task invocation.
+
+Interestingly, if the error only happened \textit{after} some
+resulting data tokens were produced by the task, the error token
+is only added to the output stream. This means that no further data
+will be added to the ouput, but the data that was produced before the
+error occured can still be consumed from the queue until the
+\texttt{ERR} token is reached.
+
+if a consuming task reads the error token from at least on of
+its input queues it will gracefully terminate its own processing
+and produce its own \texttt{ERR} to its own output queue accordingly.
+Therefor a single error will slowly but definitely propagate through
+the whole dependency tree, in the same way the \texttt{EOF} token
+is propagated, as was shown in Fig.\ref{system5}.
+
+Additionally any worker who encounters an error, whether produced
+by its own processing or by consuming the \texttt{ERR} token from
+one of its inputs, will produce an error notification to the
+\texttt{Errors} queue. This queue is read by the shell in a
+seperate thread which then marks and updates the names managed by the
+shells internal name table to indicate that certain names
+resulted in an error. This is done to prevent the user to issue
+commands including names for which it is already known that they
+resulted in an user error. So if a name is used for which this
+information is already contained in the \texttt{Errors} queue,
+the command will be blocked and an appropriate error message is
+displayed to the user.
+
+Again, it's important to note that because of the eager-evaluation
+and immediate feedback strategy of the Drift language and therefor
+its shell, it is possible that the users issues a command which contains
+a task that will soon encounter an error, or maybe even has already
+encountered an error but the information, the message itself, has
+not yet reached the \texttt{Errors} queue or is just being processed
+by the shell. So the task will be send, will be executed and then
+encounter the \texttt{ERR} token in one of its input streams just
+as described earlier.
+
+The data a task produced before it might encountered an error is
+kept, in order for the user to be able to inspect what might have
+gone wrong. So eventhough the user cannot use the erroneous name
+besides overwriting it with a new command, she can always
+query the faulty name and the data available behind that name will
+be printed by the shell until the \texttt{ERR} token is reached.
+
+Since task invocations in terms of user failure have this
+all-or-nothing property, because of the task determinism invariant,
+dealing with such errors is actually straight forward.
+The other class of errors, the system failures, are actually a bit more
+involved and are the reason why each Kafka data queue is mirrored
+by a RabbitMQ signal queue.
+\newline
+
+The error category of \textit{system failures} encompasses anything
+related to the execution of the workers or the distributed message
+queues. This means crashing, running out of disc space, memory or
+any other form of resource or simply not being reachable via the network.
+It is thought of being the responsibility of the system administrator
+to fix such errors in terms of providing the necessary hardware.
+Any software monitoring and restarting as well as replicating is either
+done by Marathon in case of the workers and service registry or in
+case of the in-memory messages handled by the distributed message
+queue brokers themselves.
+
+Since the user is not supposed to deal with those kind of failures
+it wouldn't make sense to present them to the user in any form.
+Therefor it is another invariant of the system that the user should
+never be able to recognize any form of system failure. Especially
+not when observing data.
+This is done as illustrated by Fig.\ref{error1}.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.63, keepaspectratio]{error1.pdf}
+  \caption{Example showing a worker crash and failover strategy
+           including signal queue deletion and purging of the
+           data queue.}
+  \label{error1}
+\end{figure}
+
+When a worker crashes or is unable to
+continue, it is assumed that any process it might have spawned
+will also be terminated and therefor discontinued. This is shown
+as step $1$ in the example.
+
+Since the task queue (RabbitMQ broker) will have detected the
+missing worker but did not receive a task completion notification,
+it will redistribute the task to any other worker currently
+ready to receive new tasks. In the example above this is worker
+$W_{3}$ as shown by step $2$. Given the invariant of the system
+that a task result must be presented as if this task has been
+executed \textit{exactly-once}, any worker receiving a new task
+first checks whether or not the expected result queue named after
+the hash of the task description itself already exists.
+Unfortunately this information alone is not enough. As was
+explained earlier, any consumer could have also already triggered
+the creation of said result queue by listening for data on it.
+Although possible this is rarely the case in terms of other workers
+given the order in which tasks are inserted into the task queue
+and therefor producers and consumers are spawned but one must not
+forget, that the shell is also considered a consumer.
+
+Therefor it is possible that the shell is already waiting for
+the result of a task for which the corresponding worker has
+just received the task description. To account for that a worker
+not only checks for the mere existence of the result queue but also
+reads the last token that was produced to that queue. If that
+token is not the \texttt{EOF} nor the \texttt{ERR} token, it inferes
+that the task has already been started by another worker which
+must have crashed.
+
+The worker $W_{3}$ then starts the clean up process as illustrated
+by step $3$ and $4$. It first \textit{deletes} the signal queue.
+This will trigger an immediate notification and callback invocation
+at \textit{every} listener without knowing them directly (steo $3$).
+Then, it sets the retention period for the corresponding Kafka
+data queue to the minimum value (step $4$). The Kafka broker has been
+configured to aggressively poll any retention period change, so that any
+retention period change will be carried out almost immediately
+(in around 10 seconds). Lowering the retention period of a queue
+to a couple of seconds, triggers the deletion of any message after
+that duration. Therefor reducing the retention period to its minimum
+value effectively purges the content of a queue which takes on average
+about $60$ seconds even for large queues.
+After sending the retention period change, $W_{3}$ will wait for
+two minutes before restarting the execution of the task. That
+means recreating the signal queue and spawning any necessary
+process and resetting the retention period of the data queue to
+infinity. It will then refill the data queue that now is assumed
+empty.
+
+Any worker that received the delete trigger via the signal queue
+will do the same for its own signal and data output queue. That
+means it will first delete its own output signal queue, purge
+its output data queue, terminate its process and then wait for
+two minutes before resetting the retention period of the data queue
+and restarting the process.
+Therefor the resetting also propagates through the whole dependency
+tree without any component ever knowing its complete structure,
+just as the \texttt{EOF} and \texttt{ERR} tokens propagated through
+the network.
+Admittedly, setting the retention period of the Kafka data queues
+to its minimum value in order to delete already produced messages
+before the crash seems like a hack. Unfortunately, given the
+immutable nature of the design of the Kafka message queues, even
+the newest version does not provide any mechanism for explicitly
+deleting messages from queues.
+
+This reset procedure assures, that when an \texttt{EOF} or
+\texttt{ERR} token has been produced to a data queue, the content
+of the data queue looks like as if the task that produced it
+was only executed exactly once. This whole procedure is also
+retried indefinitely because it is only triggered by system
+failures and it is assumed that these are taken care of by
+the system administrator as soon as possible.
+\newline
+
+However, there is one last problem. It is true that the final
+result looks like the task that produced it was only executed once,
+but the user could have queried the data queue at any intermediate
+point in time, just when some data had already been produced
+but the worker crashed. In order to hide the re-execution of a
+task and refilling of the data queue after a restart from the user
+another feature of Kafka message queues is used because
+Kafka queues not only store plain messages but rather
+\textit{key-value} pairs where the key can be chosen
+by the producer and the value represents the actual message.
+
+In the Drift system, the keys are managed by the corresponding
+worker, who will increment the key for every insert into the
+data queue. But the shell also retreives these keys whe
+consuming messages that are then immediately printed to the
+screen. So for example imagine a case in which the user queried
+the result of on ongoing task, which has already produced three
+output items, $a, b, c$ when the user issues the query.
+The task is now about to produce its next output item $d$ and
+suddenly crashes but $a, b$ and $c$ have already been printed
+to the screen in the shell. The whole failover procedure that
+was described above is triggered and so the data queue is resetting
+meaning $a, b$ and $c$ are deleted. The shell however still waits
+for the next new data item $d$. The next message it will receive
+from the data queue however will be $a$ again, since the whole
+task is restarted from scratch.
+
+
+So instead of buffering already received messages and comparing
+any new incoming messages with the already received ones, figuring
+out which one have already been displayed and which haven't, the
+shell simply stores the key of the last message that was printed
+to the screen. Any message that is further received with any key
+lower than that will be discarded. Only the data item with the
+next highest key will be shown. Therefor observing the data
+from the user perspective will always look like a single
+continuous execution of the task.
+\newline
+
+The same approach is of course also used when dealing with system failures
+during the creation of a namespace. Figure \ref{direrror} tries
+to illustrate an error case based on the example shown in
+Fig.\ref{dirqueue}.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.61, keepaspectratio]{direrror.pdf}
+  \caption{Example showing the handling of a worker crash during
+           the creation of a namespace.}
+  \label{direrror}
+\end{figure}
+
+As was shown earlier, the worker $W_{1}$ first received the
+\texttt{Untar*} task. It therefor received the \texttt{.tar} file
+from its input queue and first published the name of the first
+result name to the directory queue, making it available to
+the user, before then uploading its content to its data queue,
+as shown by steps 1-4. After finishing step 4 by inserting
+the \texttt{EOF} token into the data queue of the first name, worker
+$W_{1}$ published the next name to the directory queue and
+started uploading its data to the appropriate queue. So now
+it is possible that the user has already queried the content
+of the second name in that namespace and has already been streamed
+the first data items as they were produced by $W_{1}$.
+
+It is now assumed for the sake of the example that $W_{1}$ crashes.
+As already introduced Worker $W_{2}$ will
+now receive the task and is supposed to finish the
+namespace creation. So $W_{2}$ also pulls the input data
+from the input queue specified in the task description but
+instead of restarting the whole namespace creation process it
+first checks the directory queue (whose name it can calculate
+by hashing the task description it received) for any already
+published names. For each name that has already been published
+it then checks the last data item in that name's data queue.
+If the last item is not an \texttt{EOF} or \texttt{ERR} token
+it triggers the same reset-and-purge process that was already
+introduced. Therefor each unfinished name is recreated from scratch,
+which is again signaled to anyone listening on that name's queue.
+But every name that was already finished by any worker that tried
+to create that namespace before is left untouched.
+
+Therefor the same mechanism is applied in the shell, which as was
+assumed already queries the second name in the created namespace.
+Only messages from that name's queue with a key higher than the
+latest received key are shown to the user, therefor streaming a name
+from a streamed namespace behaves exactly the same as dealing with
+any other name.
+
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \includegraphics[scale=0.63, keepaspectratio]{invariants.pdf}
+  \caption{Table summarizing the properties and invariants of
+           the Drift system implementation.}
+  \label{invariants}
+\end{wrapfigure}
+
+This concludes the handling of any system failures. As a side note
+it should be mentioned that the final design of using the
+\texttt{EOF} and \texttt{ERR} tokens as control tokens and inserting
+them into the data stream was not at all obvious at the beginning.
+Different designs were implemented that featured multiple Apache
+ZooKeeper instances which allowed crashed workers to recover their
+last state and continue where they crashed. Although these designs had
+their advantages in terms of failover delay, the overall design
+of the back end system became ever more complex and harder to
+reason about. Using the control token approach all the used
+ZooKeeper instances could be eliminated and the overall design
+became much simpler.
+
+The price that is being paid for that simplicity is that the
+recomputation done by the failover worker restarts from scratch
+by purging every item that had already been produced to the
+resulting data queue. But given the overall and inherent complexity
+of the distributed system context this price was deemed acceptable
+because the recomputation can easily be further shortened as will
+be explained in chapter \ref{futurework}.
+
+Figure \ref{invariants} summarizes the system properties and
+invariants of the current Drift back end implementation
+that have been described so far.
+\newline
+
+The only thing that so far has been shown on in the examples
+but not yet talked about is the \texttt{Update} queue, which
+is for example shown in Fig.\ref{system5} and is implemented
+as a RabbitMQ queue compared to the \texttt{Error} queue, a
+Kafka queue.
+
+The reason why the \texttt{Update} queue has not been introduced
+yet is because it is mostly irrelevant to the overall back end
+system implementation. Its sole purpose is to serve as an event
+interface for any front end implementation like the Drift shell.
+Any action that is undertaken by the back end system is sent as
+an event to the \texttt{Update} queue. So whenever a worker
+receives a new tasks, or finishes as task (with either \texttt{EOF}
+or \texttt{ERR}) or restarts a task, it sends a short event
+description to the \texttt{Update}. These can then be used
+for example by any visual front ends to dynamically update the
+visualization of the system that is shown to the user, as will
+be described in the next chapter when the \textit{Drift UI} will
+be introduced.
+
+
+
+
+
+
+
 
 
