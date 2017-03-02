@@ -1,11 +1,8 @@
 digraph {
-  "test.txt" [shape="ellipse" description="Import"];
-  b [shape="ellipse" description="Cat test.txt"];
-  c [shape="ellipse" description="c"];
-  d [shape="ellipse" description="d"];
+  "data.csv" [shape="ellipse" description="Import"];
+  A [shape="rect" description="A data.csv"];
+  resultA [shape="ellipse" description="A data.csv"];
 
-  "test.txt" -> b [lineInterpolate="basis"];
-  "test.txt" -> c [lineInterpolate="basis"];
-  b -> d [lineInterpolate="basis"];
-  c -> d [lineInterpolate="basis"];
+  "data.csv" -> A [lineInterpolate="basis"];
+  A -> resultA [lineInterpolate="basis"];
 }

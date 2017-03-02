@@ -10,7 +10,7 @@ as introduced in chapter \ref{LanguageOfTheSystem}.
 
 Therefor the overall goal of the system's visualization is to
 give the user a bird's-eye perspective of the overall system.
-This overview should show all the data dependecies that have
+This overview should show all the data dependencies that have
 been built-up by the user but should also dynamically react
 to either new instructions by the user but also new events in
 the system itself, e.g. the finishing of a task.
@@ -83,7 +83,7 @@ uses circles to represent places and squares to represent transitions.
 Therefor Fig.\ref{pn1} shows a transition $A$ consuming from two
 input places and producing to three \textit{different} output places,
 $1, 2$ and $3$. These places are then also input places for the
-following transactions $B, C$ and $D$ which each only depend
+following transitions $B, C$ and $D$ which each only depend
 on their single corresponding input place.
 
 This works perfectly fine when the Petri Net is static and modelled
@@ -108,8 +108,8 @@ $A$ produce to only a single output place and having transitions
 $B, C$ and $D$ all consume from this single place would also
 drastically change the semantics of the net. Because in that case
 tokens consumed by $B$ would no longer be available to transitions
-$C$ and $D$. They would naturally content for the tokens because
-consuming a token is a destructable action (side effect).
+$C$ and $D$. All three transitions would naturally fight for the
+tokens because consuming a token is a destructable action.
 \newline
 
 However, given that the output queues in the Drift back end
@@ -141,13 +141,21 @@ as a common platform that allows for ease of use and requires no
 installation whatsoever, using HTML, CSS and JavaScript for
 implementing the website/web interface.
 
-Figure \ref{ui1} shows the final prototype of that user interface.
+Figure \ref{gui1} shows the final prototype of that user interface.
 As one can see the page is split into three vertical parts. On the left
 hand side there is a full Drift shell implementation in the
 browser. This embedded shell works exactly like the stand alone
 shell that was implemented in Java, as was presented in chapter
 \ref{driftshell} and was implemented using the JavaScript
-library \textit{jsTerm} \cite{jsTerm}.
+library \textit{jQuery Terminal} \cite{jqueryterminaljs}.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.48, keepaspectratio]{gui1.png}
+  \caption{Initial state of the system after the import of
+           the file \texttt{data.csv}. Imports are also stored
+           as events on the the time line.}
+  \label{gui1}
+\end{figure}
 
 In order for this shell to communicate with the Drift backend
 from within the browser a small websocket server was implemented
@@ -167,7 +175,6 @@ be imported via a GUI wizard, which is the same that is used
 for whenever files need to be uploaded on any other website.
 User selected files can then be read by the browser and therefor
 their content can be uploaded to the Drfit system.
-\newline
 
 Next to the shell there is an HTML5 canvas containing the graphical
 representation of the system using the already introduced Petri Net syntax.
@@ -186,7 +193,21 @@ Any new command by the user immediately updates the graph shown
 on the canvas. Services used in the command are drawn as transitions
 (squares) and connected to their input places accordingly.
 If the result of the command is bound to a name, a new place is
-drawn and connected to the service as its output place.
+drawn and connected to the service as its output place, as
+illustrated by Fig.\ref{gui2}. Also a new snapshot of the
+current graph is stored and available as an event in the time
+line for later review. Furthermore each graph element also
+offers a mouse-hover feature, where information about the
+service or name is available, e.g. if it was created via an
+import.
+
+\begin{figure}[h]
+  \includegraphics[scale=0.48, keepaspectratio]{gui2.png}
+  \caption{A simple service invocation which invokes the
+           service in the back and also immediately updates
+           the system view.}
+  \label{gui2}
+\end{figure}
 
 If a service has finished producing its output by sending and
 \texttt{EOF} token to its output queue, the update sent to the
@@ -199,8 +220,8 @@ browser missing the edge between that service and the
 corresponding input place.
 
 This means that the user can watch and observe when data has been
-finally consume or produced without querying its content. Live-querying
-the streamed data in the shell is still possible though.
+finally consume or produced without querying its content. However,
+live-querying the streamed data in the shell is still possible.
 \newline
 
 But this liveness of the system and its graphical representation
@@ -212,36 +233,72 @@ If the user now wants to look up what command created a specific
 place, she would have to scroll up, looking for the name and command
 that created \textit{that} particular place.
 
-To avoid having to do this, the graph provides a mouse-hover feature.
+\begin{figure}[h]
+  \includegraphics[scale=0.48, keepaspectratio]{gui3.png}
+  \caption{Example a more complex dependency graph but because
+           service \texttt{A} has already finished, the source
+           of \texttt{resultA} is no longer shown in the graph.}
+  \label{gui3}
+\end{figure}
+
+This is illustrated by Fig.\ref{gui3}. Here the name \texttt{resultA}
+does not contain a typical file ending like \texttt{.csv}.
+Therefor it must have been created by an earlier service invocation
+and not an import. But because the service that created this name
+has already finished, it was deleted from the system graph and only
+its result, \texttt{resultA}, remains. Since then the user has
+used the result of her earlier invocation and built-up a
+dependency tree in which some parts consume data from that
+earlier result.
+
+In order to avoid having to search for the command that created
+the name \texttt{resultA}, the graph provides a mouse-hover feature.
 If the user hovers over a place, a pop-up will contain the command that
-created that place. This is the graphical equivalent of the
-history operators \texttt{?} and \texttt{??} that were introduced
-in chapter \ref{driftlang}. Of course the mouse-hover pop-up will
-contain the original command and input place names, even when
-some of the original inputs have now been overwritten by newer
-commands.
+created that place, as is shown in Fig.\ref{gui3}. This is the graphical
+equivalent of the history operators \texttt{?} and \texttt{??}
+that were introduced in chapter \ref{driftlang}. Of course the
+mouse-hover pop-up will contain the original command and input
+place names, even when some of the original inputs have now been
+overwritten by newer commands.
 
-Another example would be, if the user entered a command and then
-went for a break. Since service vertices are removed whenever
-the corresponding worker finished the task execution, only
-the names remain after a command was completed.
-That means that the user might issue some commands, go for
-a break and then come back later and find only the result
-names she used. Since names are supposed to be chosen wisely, conveying
-as much semantics as possible, this might be enough.
-But what happens if the user \textit{does} want to revisit
-how a certain name got created?
+\begin{figure}[h]
+  \includegraphics[scale=0.48, keepaspectratio]{gui4.png}
+  \caption{Example showing how a mouse-over over the event
+           and therefor command that created the resultA name
+           shows the snapshot of the system graph at the time
+           the command was issued.}
+  \label{gui4}
+\end{figure}
 
-This is what the third column on the far right is for. It contains
-an event time line, just like Bret Victor's time bar as introduced
-in chapter \ref{bretvictor}. Whenever the user enters a new command,
-the current state of the graph is snapshotted and stored in-memory
-\footnote{A future implementation could feature allowing to
-persist these snapshots to the local filesystem, see chapter
-\ref{futurework}}.
-By hovering over the different bubbles in the time line the
-canvas will show the graph that was snapshotted at the time
-the event was created, e.g. the time the user issued the command.
-Therefor the user can ``scroll through history'' by just moving
-her mouse along the time bar.
+In order to not only view the command that created a name
+but also review the system state at the time the command
+that created that name was issued, the user can hover over
+the corresponding event in the time line and the canvas
+will immediately show the snapshot of the graph that was
+stored. Therefor old system states are stored and the
+user the review the history of the whole system, in the
+same way that a user can review old system states in
+\textit{Git} as well as \textit{Datomic}, as was introduced
+in chapter \ref{git} and \ref{datomic}. The idea of the
+event time line is of course heavily inspired by the
+time bar presented by Bret Victor, as was introduced in
+chapter \ref{bretvictor}.
+\newline
 
+So this concludes the Drift user interface, which after
+the Drift language and shell and the Drift back end including
+the immutable Drift file system, is the last part of the
+\textit{Drift Programming Environment}. The Drift UI is
+a graphical web interface which offers the same shell that
+could also be used as a stand alone shell but additionally
+offers a graphical representation of the whole system
+using the widely known Petri Net syntax with a slightly
+different semantics based on immutable data.
+
+The system graph is updated either by commands of the
+user or by updates from the individual and independent
+components of the distributed system. Therefore,
+although the individual components of the system do
+\textit{not} maintain any global state, the UI can still
+create the system overview from the individual pieces
+of information.

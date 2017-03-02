@@ -118,7 +118,9 @@
   }
 
   var initGraph = function() {
-    g.setNode("data", {shape: "ellipse", description: "import"});
+    g.setNode("resultA", {shape: "ellipse", description: "resultA = A data.csv"});
+    g.setNode("data.csv", {shape: "ellipse", description: "import"});
+
     drawGraph();
   }
 
@@ -260,9 +262,12 @@
 
 
   var mySchedule = [
-    {name:"A", date: "2012-09-28T00:00:00"},
-    {name:"B", date: "2012-09-28T01:00:00"},
-    {name:"C", date: "2012-09-28T02:00:00"},
+    {name:"import data.csv", date: "2012-09-01T01:00:00"},
+    {name:"resultA = A data.csv", date: "2012-09-02T01:00:00"},
+    {name:"resultB = B resultA", date: "2012-09-03T01:00:00"},
+    {name:"resultC = C data.csv", date: "2012-09-04T01:00:00"},
+    {name:"finalDnaSequence = D resultB resultC", date: "2012-09-05T01:00:00"},
+
 
   ];
 
@@ -273,7 +278,7 @@
     initGraph();
     initShell();
 
-    TimeKnots.draw("#timeline", mySchedule, {horizontalLayout: false, color: "black", height: 100, width:100, showLabels: false, dateFormat: ""});
+    TimeKnots.draw("#timeline", mySchedule, {horizontalLayout: false, color: "black", height: 200, width:100, showLabels: false, dateFormat: ""});
   });
 
 
