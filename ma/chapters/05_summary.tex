@@ -1,0 +1,178 @@
+\section{Summary}
+\label{summary}
+
+In summary this thesis proposed a novel programming environment
+in the area of distributed programming, called the
+\textit{Drift} programming environment. The environment consists
+of $i)$ the Drift language, a compact and abstract distributed
+coordination language focussing on the concepts of
+\textit{data} and \textit{functionality} and emphasising
+the importance of \textit{names} for conveying
+meaning in programming $ii)$ the Drift shell an implementation
+of the Drift language in form of an interpreter,
+$iii)$ the Drift distributed execution
+environment including the Drift FS, a novel distributed and
+immutable file system based on distributed message queues and
+$iv)$ the Drift user interface, a web interface featuring
+the Drift shell and a graphical representation of the
+Drift execution environment based on the well-known
+Petri Net syntax.
+\newline
+
+To set the context for the work presented here,
+chapter \ref{distributedprogramming} first introduced the concept of
+\textit{distributed programming} by giving a short summary of the
+history and evolution of programming languages and their adaption to
+fundamental changes of the underlying hardware. This was done by first
+looking at the adaption of programming language constructs regarding
+the change from single-core to multi-core CPUs in chapter
+\ref{LanguageEvolution}
+and continued with looking at another adaption, namely from single
+machine computing to distributed computing using multiple machines
+connected via a network. Therefore chapter \ref{DistributedObjects}
+introduced the approach of \textit{distributed objects} and
+chapter \ref{actorModel} introduced the \textit{actor model},
+using examples to highlight their advantages but also their shortcomings.
+\newline
+
+In order to deal with these shortcomings and to finally introduce
+the Drift project, chapter \ref{relatedwork} first introduced
+different software projects and people that
+created these projects as well as their ideas and philosophies
+regarding software, system design and system architecture. Although these
+projects might seem unrelated at first glance, they all contributed
+to the ideas and design decisions of the overall Drift project.
+Therefore, for each project, the relevant aspects regarding
+their influence on the Drift project were introduced and highlighted.
+
+This was done by first introducing Rich Hickey and his ideas of
+the \textit{language of the system} and \textit{value-oriented
+programming} in chapter \ref{LanguageOfTheSystem}.
+These ideas are then picked up in chapter \ref{cuneiform},
+by introducing \textit{Cuneiform}, a functional scientific workflow language.
+Cuneiform is developed here at the \textit{Humboldt-Universität zu Berlin}
+and combines the ideas of immutable data from the real of
+functional programming with the bird's-eye perspective of describing
+a system from the scientific workflow community.
+
+Chapter \ref{bash} then took a closer look at history and introduced
+the UNIX time sharing system including its command line shell.
+Given the new concepts of processes, a UNIX system can be seen as
+a system of independent processes working concurrently. Therefore
+the UNIX shell becomes a coordination language, orchestrating
+these processes and their data flow, much like a workflow language.
+Chapter \ref{bash} then went on by introducing a mapping between
+the language concepts the UNIX shell and language concepts known
+from functional programming languages like Cuneiform, showing
+an almost one-to-one correspondence except for the global shared mutable
+state which is the UNIX file system.
+
+Chapters \ref{datomic} and \ref{git} then introduced two
+rather new projects, namely \textit{Datomic} and \textit{Git}
+which both deal with the aspect of \textit{immutable data}.
+Datomic, being a distributed and immutable facts log, presents
+its user the illusion of immutability though being implemented
+on top of already existing mutable distributed storage solutions
+like key-value stores or SQL data bases. Git on the other hand
+is implemented as an immutable content-addressable file system
+which presents its user with a mutable and stateful interface
+based on ordinary files and file access.
+Considering these two opposing projects challenges the widely-accepted
+believe of an insurmountable divide between both approaches:
+mutability and statefulness versus immutability and functional programming.
+
+Lastly, chapter \ref{bretvictor} introduced Bret Victor and his
+idea of \textit{immediate feedback}, which, in the field of programming,
+can be seen as the goal of creating a tight feedback loop between
+the programmer typing code or issueing commands and her being presented
+with the system's response. This ties with the concept of the shell as
+introduced in chapter \ref{bash} which immediately runs its user's
+commands, as opposed to the more traditional approach of first
+writing all of the code, compiling it and then running it.
+\newline
+
+Chapter \ref{drift} then presented the Drift project. It started
+by first focussing on communication as the essence of distributed
+programming and highlighting the importance of \textit{names}
+for conveying the meaning and semantics of a program in chapter
+\ref{importanceofnames}. Then, the imperative and stateful Drift
+coordination language was presented
+in chapter \ref{driftlang}, using multiple code examples to
+gradually introduce the language concepts based around names,
+namespaces and services. Alongside the language itself, the shell
+was introduced, which features some of the language keywords as
+shell built-ins as well as letting the user traverse the names
+and namespaces like he would a typical UNIX file system.
+
+Then the Drift back end implementation was presented including
+the Drift file system, which is done by gradually building up the
+system from the basic communication between shell and system up to
+how different message queues are used for either data and signaling
+and how the file system that is presented to user was implemented
+using these message queues, especially given the mapping of directories
+to namespaces. Furthermore, the error model and fault tolerance
+mechanisms used by the Drift system were presented, using a control
+token mechanism as well as already established recovery software.
+\newline
+
+Lastly the Drift UI was presented, which was implemented in the
+form of a web interface for modern browsers. It featured a full
+fledged Drift shell as well as a graphical representation of
+the system orchestrated by the user. Instead of a direct acyclic
+graph (DAG) which is often used by similar system, the also
+widely-known Petri Net syntax with an alternative semantics
+was used. This allowed to naturally represent the Drift language
+concepts of \textit{names} and \textit{services} as places
+and transitions in the Petri Net syntax. Since this
+graphical representation is not only updated by commands of
+the user, but also by events in the system, e.g. finishing
+of a task, it is possible that elements are removed from the
+graph without user intervention. In order to allow the user
+to recap and reconstruct earlier system states a time bar was
+presented that presents all the events in the system and which
+allows the user to print older system graphs by simply mouse-hovering
+over the event entry in the time bar.
+\newline
+
+All the components presented in chapter \ref{drift} as a whole
+represent the \textit{Drift Programming Environment}. A distributed
+orchestration system focused on coordinating the communication between
+its services, built upon the idea of distributed immutable data
+which allows for virtually no contention or coordination overhead
+and therefore no global coordinator.
+
+Instead of sticking to this immutability even up to the user interface,
+forcing the user into the paradigm of functional programming, an
+imperative, stateful language is used, built on top of that immutable
+system, that allows the user to stay in the real of imperative
+programming if that feels more natural. To make dealing with this
+introduced state more managable, a graphical representation based
+on Petri Net syntax is used, that allows the user to immediately
+observe its actions and data but also allows to revisit earlier
+system states.
+\newline
+
+Any component of the \textit{Drift Programming Environment} is
+a full fledged research topic in and by itself. For example,
+language design offers many aspects that have \textit{not} been considered
+in the work presented here as will be discussed in chapter \ref{futurework},
+but also the system implementation offers infinite possibilities
+for improvement in areas like scheduling, load balancing or
+garbage collection, just to name a few.
+\newline
+
+However, the main contribution of the work that was presented here
+is not seen as the quality of each individual component. All of
+the implemented components should rather be seen as prototypes and
+proof-of-concepts that explore novel ideas in their individual
+areas. The main contribution of the \textit{Drift Programming Environment}
+is the collection and integration of all of these prototype
+components into one large system and environment, merging
+and composing them in a way that they as a collection fit
+the overall goal of this work and represent more than just
+their overall sum, challenging the widely-accepted believe
+that there is a fundamental difference between imperative,
+e.g. stateful languages and functional, e.g. immutable languages,
+as has been \textit{the} dominating discussion for the last
+decades in the area of programming language design.
+

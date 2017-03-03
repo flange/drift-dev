@@ -1,0 +1,135 @@
+\section{Future Work}
+\label{futurework}
+
+As was summarized by the last chapter, the
+\textit{Drift Programming Environment} is a collection of different
+components ranging from a coordination language and interpreter
+to an abstract distributed file system and graphical user interface.
+
+Since each of these components should be seen as a prototype
+or proof-of-concept, they naturally leave much to be desired and
+explored. So this chapter will discuss further developments of
+each component which were deemed out of the scope of the work
+presented here due to time and other resource limitations.
+\newline
+
+Starting with the Drift coordination language, one of the next
+steps would be to provide a formal specification of the language.
+So far the language has only been defined in terms of its implementation
+and some prose, trying to explain its concepts. A formal semantics
+would be needed in order to decouple the definition of the language
+from its current implementation but would probably also allow
+further reduction and understanding of the language constructs.
+Moreover, the semantics of the language would naturally lend to
+also providing a type system, which could further enhance the
+meaning given appropriate names and allow for sound guarantees
+in terms of stuckness or error handling.
+
+Furthermore, in order to fully evaluate the helpfullness of the
+language overall, user studies would be needed to assess whether
+or not the rather abstract and concise syntax and semantics of
+the language suffice in order for users to orchestrate their
+distributed systems.
+
+The Drift shell could be improved in terms of its error output
+but also in terms of its input handling, providing features
+like autocompletion for commands or a command history. Additionally,
+as was already mentioned in chapter \ref{driftshell} it could make
+sense to include a service info cache into the shell, which would
+reduce the number of round trips to the service registry in order
+to assess whether the service used in a given command are used
+correctly.
+\newline
+
+The Drift back end could be improved immensely at almost any
+aspect. One of the most obvious of these aspects is the inability
+of the system to deal with its own resource limitations. As was
+already hinted at in chapter \ref{LanguageOfTheSystem}, systems
+build on the idea of immutable data tend to not scale in terms of
+space. In this case the only space that accumulates over time
+is memory used to store data (messages) in the message queues.
+The system assumes that there will always be enough memory to
+allow the user to create new names and therefore spawn new
+messages while indefinitely keeping every other message queue
+ever created.
+
+This could be dealt with by garbage collecting, e.g. deleting,
+queues where every active user session has either deleted or reassigned
+the name that was once bound to that particular queue (reference counting).
+This would eliminate the caching effect and would force future tasks
+to recomputate the content of the queue even though its result
+was already computed once, but would on the other hand allow the system
+to continue to function and not run into memory issues.
+
+Another aspect of garbage collection concerns services that
+are running even though their result is currently never used.
+Imagine for example a user issuing a command, immediately querying
+its output and seeing that she made a mistake. The user can then
+immediate reassign the name to a new service invocation but the
+old service invocation is still running, even though its result
+will probably never be used. So canceling the tasks that are
+executed unnecessarily would free up the workers to execute tasks
+that are actually needed and would therefore increase the throughput
+of the system.
+\newline
+
+Another issue concerning workers is scheduling, which of course
+is a huge research topic in and by itself. The current implementation
+uses round-robin scheduling by the task queue, distributing incoming
+tasks evenly among all available workers. This was deemed
+reasonable under the assumption of a homogenous cluster in terms
+of hardware. But given slight variations in terms of available
+CPU power, memory or bandwith, this could of course be
+replaced by a scheduling component that takes all these different
+aspects into account. Maybe even learns or adopts to different
+workloads on the fly.
+
+Additionally another aspect of the scheduling concerns the
+order in which tasks are scheduled. The current implementation
+treats all tasks as equal, whether or not they are considered
+producers or consumers. So for the sake of the example one could
+imagine a system with only two workers $W_{1}$, $W_{2}$ but
+4 tasks queued in the order: $C_{2}$, $P_{2}$, $C_{1}$, $P_{1}$
+with the right most task, $P_{1}$, being the next to be executed.
+Given the two workers, $W_{1}$ would execute $P_{1}$ and $W_{2}$
+would execute $C_{1}$, effectively idling, waiting for input
+from $W_{1}$.
+
+However, if the system would schedule all the producing
+tasks first, $W_{1}$ would still execute $P_{1}$ but $W_{2}$
+would now execute $P_{2}$, therefore really computing in parallel
+and always guaranteeing that whenever a consumer task is executed
+the input data for that consumer is always already available.
+But this would not only mean reordering the task queue, which
+might not be that difficult but also infering which task is
+categorized as a producer and which as a consumer, which might
+not at all be trivial or even possible to figure out.
+\newline
+
+Given the web interface I personally don't see that much room
+for improvement. Of course, this being only a prototype and me
+not being a web developer, probably every button or element
+could be implemented nicer and prettier given all the features
+the modern web has to offer. However, the only feature I would
+actually really add besides much overdue cosmetic work, is for
+the user to be able to write certain system snapshot to a file
+and maybe load them from a file in order to resume from that
+snapshort, either for backup purposes or simply convenience
+when moving between systems. But given the sandbox nature of
+the browser and its JavaScript engine due to important security
+concerns when browsing the web, this seems rather unlikely.
+\newline
+
+These conclude the major implementational weak points which
+would likely need to be addressed in any further development
+of the language and system.
+
+Otherwise I can only encourage future projects to challenge
+wide-spread believes about imperative or functional languages
+or mutable and immutable data, especially in the
+context of distributed system, by trying to emulate one with
+the other in order to gain further knowledge and understanding
+about which concepts are needed on which layer of the system
+stack to fully utilize their advantages and neglect their drawbacks.
+
+
