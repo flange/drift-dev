@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -d "build" ]; then
+  mkdir build
+fi
+
 cp chapters/* build
 cp images/* build
 cp bibtex/* build

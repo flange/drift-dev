@@ -38,7 +38,7 @@ Fig.\ref{drift-examples1} shows the basic concepts offered by
 the \textit{Drift language} as implemented by the \textit{Drift shell}.
 In the Drift language, service names are required to
 start with an upper case letter, whereas names representing
-data are to be started with a lower case letter. The $.>$ symbolizes
+data are to be started with a lower case letter. The \texttt{.>} symbolizes
 the shell prompt. The first example of Fig.\ref{cat1}
 shows the most basic use case: a simple service invocation.
 Following the tradition of the UNIX shell, Drift uses the same
@@ -174,8 +174,8 @@ completely empty \textit{namespace} containing no names. However,
 before the actual session starts and the entering of commands is allowed,
 the user is presented with a setup phase. In this \textit{import phase}
 she can only use the \textit{import} keyword to \textit{upload}
-files from the local file system of where the Drift shell is run
-into the Drift system.
+files from the local file system, of whereever the Drift shell is currently
+running on, into the Drift system.
 
 When the user has finished the import phase, the actual session
 begins and normal command input is possible. The \textit{import}
@@ -263,7 +263,7 @@ it to the screen. But it would also not make sense to bind
 a bunch of names to only a single name, as was shown so far.
 
 Therefor, the result of services returning a namespace must
-also always be bind to a namespace.
+also always be bound to a namespace.
 
 \begin{wrapfigure}{l}{0.4\textwidth}
   \begin{lstlisting}
@@ -306,7 +306,7 @@ This is important because since there are no variables in the
 Drift language, only names and namespaces one could now say
 that either the original file system was liftet up into the
 language or the language allows its variable-space to be
-traversable like a tree. Both interpretations, I think, are valid.
+traversable like a tree. Both interpretations are valid.
 
 But not only the variable-space or data-space forms a tree. As
 was already mentioned, also the orchestration of services and

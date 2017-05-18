@@ -40,7 +40,7 @@ the Drift project, chapter \ref{relatedwork} first introduced
 different software projects and people that
 created these projects as well as their ideas and philosophies
 regarding software, system design and system architecture. Although these
-projects might seem unrelated at first glance, they all contributed
+projects might seem unrelated at first, they all contributed
 to the ideas and design decisions of the overall Drift project.
 Therefore, for each project, the relevant aspects regarding
 their influence on the Drift project were introduced and highlighted.
@@ -91,7 +91,7 @@ commands, as opposed to the more traditional approach of first
 writing all of the code, compiling it and then running it.
 \newline
 
-Chapter \ref{drift} then presented the Drift project. It started
+Chapter \ref{drift} then presented the Drift project
 by first focussing on communication as the essence of distributed
 programming and highlighting the importance of \textit{names}
 for conveying the meaning and semantics of a program in chapter
@@ -108,11 +108,11 @@ Then the Drift back end implementation was presented including
 the Drift file system, which is done by gradually building up the
 system from the basic communication between shell and system up to
 how different message queues are used for either data and signaling
-and how the file system that is presented to user was implemented
+and how the file system that is presented to the user was implemented
 using these message queues, especially given the mapping of directories
 to namespaces. Furthermore, the error model and fault tolerance
 mechanisms used by the Drift system were presented, using a control
-token mechanism as well as already established recovery software.
+token mechanism as well as already established distributed recovery software.
 \newline
 
 Lastly the Drift UI was presented, which was implemented in the
@@ -144,7 +144,7 @@ and therefore no global coordinator.
 Instead of sticking to this immutability even up to the user interface,
 forcing the user into the paradigm of functional programming, an
 imperative, stateful language is used, built on top of that immutable
-system, that allows the user to stay in the real of imperative
+system, that allows the user to stay in the realm of imperative
 programming if that feels more natural. To make dealing with this
 introduced state more managable, a graphical representation based
 on Petri Net syntax is used, that allows the user to immediately

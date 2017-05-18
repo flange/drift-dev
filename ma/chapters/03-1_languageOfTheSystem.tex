@@ -17,7 +17,7 @@ pragmatist's compromise of having immutable data by default but
 allowing for easy I/O and statefulness whenever neededed.
 
 Although Clojure's \textit{front end} (its syntax) looks a lot like
-Lisps syntax, which is notorious for its extensive use of
+Lisp' syntax, which is notorious for its extensive use of
 parenthesis, Clojure's \textit{back end} (its implementation)
 focusses heavily on very modern features like
 \textit{software transactional memory} \cite{stm} and
@@ -49,7 +49,8 @@ components and then running them simultaneously, hoping that a
 distributed system will almost magically emerge but lacking any
 description whatsoever of that system as a whole.
 
-\begin{wrapfigure}{r}{0.5\textwidth}
+\newpage
+\begin{wrapfigure}{l}{0.5\textwidth}
 
   \includegraphics[width=0.5\textwidth]{systemlang.png}
   \caption{Slide-excerp from the talk ``The Language of the System'' by
@@ -59,6 +60,10 @@ description whatsoever of that system as a whole.
 
 \end{wrapfigure}
 
+
+
+
+
 The reason for this, he claims, is that the languages and tools
 we use to build each individual component have been developed to
 do exactly this: describe \textit{programs}, describe encapsulated
@@ -67,7 +72,7 @@ means of describing how to compose these components, because they
 don't provide any primitives for how they \textit{communicate}.
 
 As can be seen in Fig.\ref{systemlang} he draws parallels to how
-we haven been building our programs in order to derive similar
+we have been building our programs in order to derive similar
 properties for our system composition and description. For example
 he proposes that the language of the system too, would have
 primitives just like the programming languages that we have been
@@ -191,7 +196,7 @@ to see multiple functions using the value '5' as one of their
 input values. One calculating the square of its inputs the other
 something completely different. Although both are working with
 the same \textit{value} they are working with their own copies of it,
-which don't have to updated or coordinated in any way, because
+which don't have to be updated or coordinated in any way, because
 five is always five. The value cannot change. This means that there's
 virtually no coordination overhead which allows value-oriented
 systems to scale in time, but because multiple instances or copies

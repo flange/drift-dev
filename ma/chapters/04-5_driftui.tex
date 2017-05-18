@@ -8,7 +8,7 @@ of \textit{immediate feedback} that was introduced in chapter \ref{bretvictor}
 as well as on the original idea of a \textit{language of the system}
 as introduced in chapter \ref{LanguageOfTheSystem}.
 
-Therefor the overall goal of the system's visualization is to
+therefore the overall goal of the system's visualization is to
 give the user a bird's-eye perspective of the overall system.
 This overview should show all the data dependencies that have
 been built-up by the user but should also dynamically react
@@ -24,7 +24,7 @@ large structures with only a few lines of commands. This can
 mislead the user into thinking that the system is still small
 and managable when in reality it is a complex dependency graph
 containing multiple interconnected data dependencies that
-are not easy to grasp. Therefor the visual representation
+are not easy to grasp. therefore the visual representation
 is thought of as a guideline for the user, mirroring her commands
 and showing their immediate effects to the overall system.
 \newline
@@ -40,7 +40,7 @@ DAG would eliminate the corresponding vertex and update its view.
 
 At first this was implemented in exactly that fashion. Unfortunately
 this forced the decision whether vertices in the DAG represent
-services and where therefor named after the name of the invoked
+services and were therefore named after the name of the invoked
 service, or whether vertices represent the data, being named after
 the names given by the user. Although it would've been possible
 to allow the user to dynamically switch between both views,
@@ -52,7 +52,7 @@ are $B$ independent of each other. That is what is captured by
 the DAG.
 
 However, the Drift language's core concepts are \textit{data}
-and \textit{functionality}. Therefor both concepts exist in
+and \textit{functionality}. therefore both concepts exist in
 the language: \textit{names} (data) and \textit{services}
 (functionality). So a visual representation would need to
 have two different concepts in order to represent both, names
@@ -80,7 +80,7 @@ namely \textit{places} and \textit{transitions}, they offer different
 syntax to talk about both concepts. Figure \ref{pn1} shows a very
 rough sketch of the idea of a Petri Net. The Petri Net syntax
 uses circles to represent places and squares to represent transitions.
-Therefor Fig.\ref{pn1} shows a transition $A$ consuming from two
+therefore Fig.\ref{pn1} shows a transition $A$ consuming from two
 input places and producing to three \textit{different} output places,
 $1, 2$ and $3$. These places are then also input places for the
 following transitions $B, C$ and $D$ which each only depend
@@ -91,7 +91,7 @@ without any dynamically changing parts. However, given the goal
 of immediate feedback the Drift shell uses eager-evaluation and
 the system is composed \textit{along the way} whenever the user
 enters new commands.
-Therefor it is not possible to infer or predict how many consumers
+therefore it is not possible to infer or predict how many consumers
 a given service invocation will have. In the worst-case scenario
 all available workers will at some point consume from the
 same input data source at the same time. That means that building the
@@ -101,7 +101,7 @@ service invocation as there are workers in the system.
 This makes sense in the formalism and realm of Petri Nets because
 here, as shown in Fig.\ref{pn1}, transition $B$ could really consume
 (meaning eliminate) tokens from place $1$ but not from place $2$.
-Therefor the \textit{firing} of transition $B$ is completely
+therefore the \textit{firing} of transition $B$ is completely
 independent from the firing of transition $C$ because their inputs
 are different. If one would change the given model, having transition
 $A$ produce to only a single output place and having transitions
@@ -115,7 +115,7 @@ tokens because consuming a token is a destructable action.
 However, given that the output queues in the Drift back end
 are implemented using \textit{immutable} Apache Kafka queues, multiple
 consumers can consume from the same queue concurrently without
-any contention. Therefore, instead of modelling the
+any contention. thereforee, instead of modelling the
 producer-consumer relationships between $A$ and $B, C$ and $D$
 with different independent output places, a single output
 place can be used, as shown by Fig.\ref{pn2}.
@@ -130,7 +130,7 @@ It cannot be highlighted enough that using the original Petri Net
 formalism the nets presented in Fig.\ref{pn1} and \ref{pn2} would
 have drastically different semantics as explained earlier.
 However, the Petri Net \textit{syntax} supports exactly the
-same concepts as the Drift language and is therefor a better fit in terms
+same concepts as the Drift language and is therefore a better fit in terms
 of visualizing a Drift system than a simple DAG, mapping names
 to places and services to transitions. So \textit{only} the
 \textit{visual} Petri Net syntax and not the
@@ -173,7 +173,7 @@ one cannot access arbitrary local files from within JavaScript
 and the browser, the user needs to select to files which shall
 be imported via a GUI wizard, which is the same that is used
 for whenever files need to be uploaded on any other website.
-User selected files can then be read by the browser and therefor
+User selected files can then be read by the browser and therefore
 their content can be uploaded to the Drfit system.
 
 Next to the shell there is an HTML5 canvas containing the graphical
@@ -243,7 +243,7 @@ that created \textit{that} particular place.
 
 This is illustrated by Fig.\ref{gui3}. Here the name \texttt{resultA}
 does not contain a typical file ending like \texttt{.csv}.
-Therefor it must have been created by an earlier service invocation
+therefore it must have been created by an earlier service invocation
 and not an import. But because the service that created this name
 has already finished, it was deleted from the system graph and only
 its result, \texttt{resultA}, remains. Since then the user has
@@ -264,7 +264,7 @@ overwritten by newer commands.
 \begin{figure}[h]
   \includegraphics[scale=0.48, keepaspectratio]{gui4.png}
   \caption{Example showing how a mouse-over over the event
-           and therefor command that created the resultA name
+           and therefore command that created the resultA name
            shows the snapshot of the system graph at the time
            the command was issued.}
   \label{gui4}
@@ -275,7 +275,7 @@ but also review the system state at the time the command
 that created that name was issued, the user can hover over
 the corresponding event in the time line and the canvas
 will immediately show the snapshot of the graph that was
-stored. Therefor old system states are stored and the
+stored. therefore old system states are stored and the
 user the review the history of the whole system, in the
 same way that a user can review old system states in
 \textit{Git} as well as \textit{Datomic}, as was introduced
@@ -297,7 +297,7 @@ different semantics based on immutable data.
 
 The system graph is updated either by commands of the
 user or by updates from the individual and independent
-components of the distributed system. Therefore,
+components of the distributed system. thereforee,
 although the individual components of the system do
 \textit{not} maintain any global state, the UI can still
 create the system overview from the individual pieces

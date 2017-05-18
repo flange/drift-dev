@@ -33,19 +33,19 @@ telecommunications infrastructure.
 \newline
 
 \begin{wrapfigure}{r}{0.45\textwidth}
-  \vspace{-10mm}
+  %\vspace{-10mm}
   \includegraphics[width=0.4\textwidth]{actor.pdf}
   \caption{Concept of an \textit{Actor} as \\defined by the
           actor model.}
   \label{actor}
-  \vspace{-25mm}
+  %\vspace{-25mm}
 \end{wrapfigure}
 
 The core concepts of the actor model as outlined in \cite{actorsagha}
 and \cite{actors2010}
 can be summarized as follows. The actor model treats \textit{actors}
 (or processes) as its universal primitives of computation.
-These actors are autonomous in the sense that each actors executed
+These actors are autonomous in the sense that each actor's executed
 behavior is independent of the concurrent existence of other actors.
 However, in order to interact with others, actors can send and receive
 messages as illustrated in Fig.\ref{actor}. So each actor consists
@@ -65,8 +65,8 @@ for messages received by an actors input queue. Any such communication
 protocol must be implemented by the actors themselves, e.g. by
 programming their behavior to send an acklowdgement to the sender once
 a message is processed. This means that, using the plain actor model,
-a sender cannot only not infer whether or not its message was processed
-or perceived by its receiver, it can't even infer whether or not
+a sender cannot infer whether or not its message was processed
+or perceived by its receiver. It cannot even infer whether or not
 the message ever reached the receiver.
 \newline
 
@@ -83,7 +83,7 @@ So again the actor model seems to provide a sweetspot because on
 the one hand it encompasses characteristic properties of highly
 distributed systems, i.e. virtually no message delivery guarantees,
 thereby forcing the developer to deal with these circumstances
-in her program structure and application design and on the other
+\textit{explicitely} in her program structure and application design and on the other
 hand provides small, independent and single threaded units of
 computation in order to build more abstract and higher level
 distributed applications.
@@ -98,20 +98,20 @@ distributed applications.
 
 serve() ->
   receive
-    Request ->
+    {Request} ->
       io:format("received request~n"),
       serve()
   end.
 
 run() ->
   Pid = spawn(?MODULE, serve, []),
-  Pid ! Request,
+  Pid ! {Request},
   ok.
     \end{lstlisting}
   \caption{Erlang example of how to spawn an Actor using the \textit{spawn}
           function and how to use the messaging operator \textit{!}}
   \label{erlang-example}
-  \vspace{-20mm}
+ % \vspace{-20mm}
 \end{wrapfigure}
 
 Since Erlang is an actor based language, Fig.\ref{erlang-example}
@@ -125,7 +125,8 @@ given patterns. So it can be thought of as the combination of an
 implicit event loop and a switch-case statement.
 
 In the case of this example any message that consists of only a single
-atom will be matched to the user-defined Request pattern, triggering
+\texttt{Request} \textit{atom} will be matched to the user-defined
+\texttt{Request} \textit{pattern}, triggering
 a simple console print and a recursive call to restart the receive
 loop. This is important because when the receive loop is entered it
 will wait for incoming messages indefinitely unless a timeout is
@@ -135,6 +136,9 @@ programmed. When there are multiple messages in the actors inbox
 that could be matched against some provided pattern only one
 of them is being process and it is up to the actor when to
 reenter the receive loop in order to process the remaining messages.
+If a message is received that cannot be matched to any pattern, the
+message is ignored but kept.
+\newline
 
 To address the actor or process created by the call to \textit{spawn()}
 a process identifier (PID) is returned by spawn, which is the only
@@ -155,8 +159,8 @@ the actual description of the system happens implicitely and
 indirectly. It is more like the system \textit{emerges} out of all the
 little steps and interactions of its components. To the effect that,
 given a running system of maybe a hundred or a thousand actors
-\cite{uber}, how would one come to understand what the system as
-a whole is doing?
+\cite{uber}, how would one come to understand what the system is doing
+as a whole?
 
 There is no other option than to just pick any actor and start
 reading its code. This means one is forced to reverse engineer the
@@ -167,3 +171,15 @@ take a look at the system from the birds-eye perspective because
 most people believe this implies introducing some form of global
 state which would be against any of the goals of the actor model
 with its asynchronous message passing and independent processes.
+\newline
+
+Another problem of the \textit{Actor Model} or any other process
+calculus for that matter, is that any actor can possibily communicate
+\textit{directly} with any other actor in the entire system at any
+given moment in time. This, combined with the fact that almost every
+process calculi including the Actor Model is turing-complete,
+means that even the simple question whether or not process 1
+ever communicates with process 87 becomes undecidable in the general
+case. Which makes it almost impossible to predict the consequences
+of shutting down a single actor regarding the behavior of the system,
+given a large enough system of actors.
