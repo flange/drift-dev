@@ -57,7 +57,7 @@ This could be dealt with by garbage collecting, e.g. deleting,
 queues where every active user session has either deleted or reassigned
 the name that was once bound to that particular queue (reference counting).
 This would eliminate the caching effect and would force future tasks
-to recomputate the content of the queue even though its result
+to recompute the content of the queue even though its result
 was already computed once, but would on the other hand allow the system
 to continue to function and not run into memory issues.
 
@@ -107,12 +107,11 @@ not at all be trivial or even possible to figure out.
 \newline
 
 Given the web interface I personally don't see that much room
-for improvement. Of course, this being only a prototype and me
-not being a web developer, probably every button or element
-could be implemented nicer and prettier given all the features
-the modern web has to offer. However, the only feature I would
+for improvement. Of course, this being only a prototype probably every
+button or element could be implemented nicer and prettier given all the
+features the modern web has to offer. However, the only feature I would
 actually really add besides much overdue cosmetic work, is for
-the user to be able to write certain system snapshot to a file
+the user to be able to write a certain system snapshot to a file
 and maybe load them from a file in order to resume from that
 snapshort, either for backup purposes or simply convenience
 when moving between systems. But given the sandbox nature of
@@ -127,9 +126,9 @@ of the language and system.
 Otherwise I can only encourage future projects to challenge
 wide-spread believes about imperative or functional languages
 or mutable and immutable data, especially in the
-context of distributed system, by trying to emulate one with
+context of distributed systems, by trying to emulate one with
 the other in order to gain further knowledge and understanding
 about which concepts are needed on which layer of the system
-stack to fully utilize their advantages and neglect their drawbacks.
+stack to fully utilize their advantages and to balance out their drawbacks.
 
 

@@ -41,7 +41,7 @@ and by either persisting the output of the program to the file system or
 chaining subsequent program calls, redirecting the output of one
 program to be the input of the next program in the chain
 (\textit{pipe mechanism}). Although it is possible for processes
-to directly talk to other processes via inter-process communication
+to communicate with other processes indirectly via inter-process communication
 mechanisms like \textit{named pipes} or \textit{sockets}, the default
 mode of operation is that each process receives its input data from
 a designated input channel called \textit{standard in} (stdin) and
@@ -50,7 +50,7 @@ can choose between two designated output channels, named
 which direct the output back to the shell who created the process.
 
 This means that each component doesn't know and doesn't have to know
-how the whole composition, of which it is being part of, looks like.
+how the whole composition, of which it is being part of.
 It only knows where its inputs come from and where to produce its
 output to. In my opinion, this bears much resemblance to the basic
 notion of a function and function composition in functional programming.
@@ -64,7 +64,6 @@ as introduced in chapter \ref{actorModel}.
   \caption{Mapping of concepts from the original UNIX shell to
           functional programming concepts.}
   \label{bashmapping}
-  \vspace{-100pt}
 
 \end{wrapfigure}
 

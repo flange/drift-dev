@@ -66,16 +66,25 @@ But when one looks at how languages and frameworks implemented
 this new model one can see the same pattern as with multithreading
 libraries because the remote functionality and remote method calls are
 implemented by inheriting and overwriting certain methods on the server
-side and on the client side by instantiating a remote object and calling
-a remote method on that object. Unfortunately using the exact same
+side and on the client side by instantiating a \textit{local} proxy object
+representing the remote object and calling
+the methods of the remote object \textit{implicitely} by calling the methods
+of the local proxy object. Unfortunately using the exact same
 syntax as for any local function call.
 
 The difference of course is, that the remote procedure call, being remote,
 has to deal with different error and failure scenarios than any local
 method call. Hence it might throw some sort of remote exception which,
-from the view point of the client can be totally suprising, because
+from the point of view of the client can be totally suprising, because
 syntactically there is no indication whatsoever that this is an action
 that involves the network or any remote machine.
+
+As Leslie Lamport once said \cite{lamportquote}:
+
+\begin{quote}
+``A distributed system is one in which the failure of a computer
+you didn't even know existed can render your own computer unusable.''
+\end{quote}
 
 The lesson here of course is the same as with concurrency support in
 programming languages because the underlying system changed in nontrivial
